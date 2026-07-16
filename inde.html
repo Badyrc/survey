@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Социальный опрос российских подростков</title>
+  <style>
+    :root {
+      --bg: #eef4f8;
+      --card: rgba(255, 255, 255, 0.98);
+      --card-strong: #f7fafc;
+      --text: #172033;
+      --muted: #5c6b7a;
+      --line: #cbd8e4;
+      --soft: #e7f0f5;
+      --danger: #be3654;
+      --danger-bg: rgba(190, 54, 84, 0.09);
+      --accent: #2563eb;
+      --accent-strong: #1d4ed8;
+      --teal: #0f766e;
+      --teal-soft: rgba(15, 118, 110, 0.10);
+      --good: #15803d;
+      --tile: #eee4da;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.10), transparent 34rem),
+        radial-gradient(circle at 90% 85%, rgba(15, 118, 110, 0.08), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 16px;
+    }
+
+    body {
+      min-height: 100dvh;
+      overflow-x: hidden;
+      padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    .app {
+      width: min(100%, 1080px);
+      margin: 0 auto;
+      padding-bottom: 52px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 18px 50px rgba(31, 56, 82, 0.12);
+      backdrop-filter: blur(16px);
+    }
+
+    .narrow { max-width: 820px; margin: 0 auto; }
+    .wide { max-width: 1080px; margin: 0 auto; }
+
+    h1, h2, h3 { line-height: 1.15; margin: 0 0 14px; }
+    h1, h2 { text-wrap: balance; }
+    p { line-height: 1.48; margin: 10px 0; }
+
+    .muted { color: var(--muted); font-size: 0.94rem; }
+    .small { font-size: 0.9rem; }
+    .center { text-align: center; }
+
+    .pill {
+      display: inline-block;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent-strong), var(--teal));
+      color: #fff;
+      font-weight: 800;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 20px rgba(37,99,235,0.18);
+    }
+
+    .warning {
+      background: var(--danger-bg);
+      border-left: 4px solid var(--danger);
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin: 14px 0;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 22px;
+    }
+
+    .btn {
+      border: 1px solid #b7c7d6;
+      background: #f8fafc;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 16px;
+      min-height: 50px;
+      cursor: pointer;
+      font-weight: 700;
+      touch-action: manipulation;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .btn:hover { border-color: var(--teal); box-shadow: 0 6px 18px rgba(15,118,110,0.12); }
+    .btn:active { transform: translateY(1px) scale(0.99); }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent-strong), #0f766e);
+      border-color: #2563eb;
+      color: #fff;
+      box-shadow: 0 8px 22px rgba(37,99,235,0.22);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .field { text-align: left; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { display: block; font-weight: 750; margin-bottom: 6px; }
+    .field input, .field select {
+      width: 100%;
+      padding: 12px 12px;
+      min-height: 50px;
+      color: var(--text);
+      border: 1px solid #b7c7d6;
+      border-radius: 12px;
+      background: #ffffff;
+    }
+
+    .field input:focus, .field select:focus {
+      outline: 3px solid rgba(15,118,110,0.16);
+      border-color: var(--teal);
+    }
+
+    select option { background: #ffffff; color: var(--text); }
+
+    .error {
+      display: none;
+      color: var(--danger);
+      font-weight: 800;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .likert-list { display: grid; gap: 16px; margin-top: 18px; }
+    .likert-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: var(--card-strong);
+      text-align: left;
+    }
+    .likert-prompt { font-weight: 750; line-height: 1.35; margin-bottom: 12px; }
+    .likert-scale {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(34px, 1fr));
+      gap: 6px;
+      align-items: stretch;
+    }
+    .likert-scale input { display: none; }
+    .likert-scale label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border: 1px solid #b7c7d6;
+      border-radius: 10px;
+      background: #ffffff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .likert-scale input:checked + label {
+      background: linear-gradient(135deg, var(--accent-strong), #0f766e);
+      border-color: #2563eb;
+      color: #fff;
+      box-shadow: 0 5px 14px rgba(37,99,235,0.20);
+    }
+    .scale-anchors {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 8px;
+      gap: 8px;
+    }
+
+    .rank-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+      margin-top: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card-strong);
+      padding: 14px;
+      min-height: 280px;
+    }
+
+    .panel h4 { margin: 0 0 12px; }
+
+    .improvement-option {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      align-items: stretch;
+      margin: 8px 0;
+    }
+
+    .improvement-option.empty { grid-template-columns: 1fr; }
+
+    .improvement-btn, .slot {
+      width: 100%;
+      border: 1px solid #b7c7d6;
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin: 0;
+      min-height: 54px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.25;
+    }
+
+    .improvement-btn.selected, .slot.selected {
+      outline: 3px solid rgba(15,118,110,0.16);
+      border-color: var(--teal);
+      background: #eaf7f5;
+    }
+
+    .slot-number {
+      width: 30px;
+      flex: 0 0 30px;
+      font-weight: 900;
+      color: var(--teal);
+    }
+
+    .slot-empty { color: #738396; }
+
+    .improvement-heading {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 10px 14px;
+      margin: 12px 0 4px;
+    }
+
+    .improvement-heading .improvement-name { margin: 0; }
+
+    .drop-pool {
+      display: none;
+      border: 1px dashed var(--teal);
+      background: var(--teal-soft);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    .drop-pool.visible { display: block; }
+
+    .rating-card { max-width: 900px; margin: 0 auto; }
+    .rating-title { font-size: 1.35rem; font-weight: 900; margin: 8px 0; }
+    .improvement-name { font-size: clamp(1.45rem, 6vw, 2.25rem); font-weight: 950; margin: 12px 0 4px; line-height: 1.2; text-wrap: balance; }
+
+    .slider-wrap {
+      position: relative;
+      width: min(820px, 100%);
+      margin: 56px auto 20px;
+      padding: 0;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      min-height: 34px;
+      touch-action: pan-y;
+      display: block;
+      margin: 0;
+    }
+
+    .marker {
+      position: absolute;
+      top: -17px;
+      width: 2px;
+      height: 31px;
+      transform: translateX(-1px);
+      background: #7f96aa;
+      z-index: 1;
+    }
+
+    .marker-label {
+      position: absolute;
+      left: 1px;
+      bottom: calc(100% + 2px);
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: min(310px, calc(100vw - 32px));
+      padding: 4px 7px;
+      border: 1px solid #7f96aa;
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1.2;
+      text-align: center;
+      white-space: normal;
+    }
+
+    .marker.edge-left .marker-label { left: 0; transform: translateX(0); text-align: left; }
+    .marker.edge-right .marker-label { left: 2px; transform: translateX(-100%); text-align: right; }
+
+    .marker.group {
+      top: -53px;
+      height: 67px;
+      background: var(--accent-strong);
+      z-index: 2;
+    }
+    .marker.group .marker-label { color: #fff; background: var(--accent-strong); border-color: var(--accent); }
+    .marker.group.excluded { background: var(--danger); }
+    .marker.group.excluded .marker-label { background: #9f2947; border-color: var(--danger); }
+
+    .slider-wrap.has-group { margin-top: 96px; }
+
+    .scale-labels {
+      width: min(820px, 100%);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .value-line { margin-top: 14px; font-size: 1.15rem; }
+
+    .source-note {
+      margin: 16px 0 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #eef5f8;
+      text-align: left;
+      line-height: 1.45;
+    }
+
+    .source-note.trigger {
+      background: var(--danger-bg);
+      border-left: 4px solid var(--danger);
+    }
+
+    .source-note.context {
+      background: rgba(37, 99, 235, 0.08);
+      border-left: 4px solid var(--accent);
+    }
+
+    .source-kicker {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--accent-strong);
+      font-size: 0.82rem;
+      font-weight: 950;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .source-note.trigger .source-kicker { color: #8f2440; }
+
+    .source-banner {
+      margin: 18px 0;
+      padding: 16px;
+      border: 1px solid var(--danger);
+      border-radius: 16px;
+      background: var(--danger-bg);
+      text-align: left;
+      line-height: 1.5;
+    }
+
+    .source-banner span { display: block; color: #8f2440; font-size: 0.82rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
+    .source-banner strong { display: inline; color: #6f1d34; }
+
+    .low-support-list {
+      display: grid;
+      gap: 12px;
+      margin: 20px auto;
+      max-width: 720px;
+    }
+
+    .low-support-card {
+      border: 2px solid var(--danger);
+      background: var(--danger-bg);
+      color: #6f1d34;
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-weight: 950;
+      font-size: 1.12rem;
+      text-align: left;
+    }
+
+    .attention-options {
+      display: grid;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .attention-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #ffffff;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .attention-option:has(input:checked) {
+      border-color: var(--accent);
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    .attention-option input { margin-top: 3px; flex: 0 0 auto; }
+
+    .break-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 390px) 1fr;
+      gap: 18px;
+      align-items: start;
+      margin-top: 14px;
+    }
+
+    .game-wrap { touch-action: none; }
+    .game-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .timer, .score {
+      background: var(--soft);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-weight: 900;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: #d8e3eb;
+      border: 1px solid #aabcca;
+      padding: 8px;
+      border-radius: 14px;
+      width: min(100%, 390px);
+      aspect-ratio: 1 / 1;
+    }
+
+    .tile {
+      border-radius: 10px;
+      background: #edf2f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.15rem, 7vw, 2rem);
+      font-weight: 950;
+      color: var(--text);
+    }
+    .tile.v2 { background: #dceaf3; }
+    .tile.v4 { background: #c7dde9; }
+    .tile.v8 { background: #7fb3cc; color: #102a3a; }
+    .tile.v16 { background: #4f93b6; color: #fff; }
+    .tile.v32 { background: #2f6fa3; color: #fff; }
+    .tile.v64 { background: #1d4ed8; color: #fff; }
+    .tile.v128, .tile.v256, .tile.v512, .tile.v1024, .tile.v2048 { background: #0f766e; color: #fff; font-size: clamp(0.95rem, 5vw, 1.55rem); box-shadow: inset 0 0 24px rgba(255,255,255,0.18); }
+
+    .game-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 58px);
+      grid-template-areas:
+        ". up ."
+        "left down right";
+      gap: 8px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .game-controls button { min-height: 50px; border-radius: 12px; border: 1px solid #aabcca; background: #f8fafc; color: var(--text); font-weight: 950; }
+    .up { grid-area: up; }
+    .left { grid-area: left; }
+    .down { grid-area: down; }
+    .right { grid-area: right; }
+
+    .data-preview {
+      max-height: 260px;
+      overflow: auto;
+      background: #111;
+      color: #f7f7f7;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+
+    .instruction-stage {
+      min-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      display: grid;
+      place-items: center;
+    }
+
+    .instruction-card {
+      width: min(100%, 760px);
+      min-height: min(520px, calc(100dvh - 52px));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: clamp(24px, 6vw, 58px);
+    }
+
+    .instruction-sentence {
+      max-width: 680px;
+      margin: 12px auto;
+      font-size: clamp(1.55rem, 5vw, 2.55rem);
+      line-height: 1.2;
+      font-weight: 950;
+      text-wrap: balance;
+    }
+
+    .instruction-progress {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .instruction-progress span {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #9fb0bf;
+    }
+
+    .instruction-progress span.active { width: 28px; background: var(--teal); box-shadow: 0 5px 12px rgba(15,118,110,0.20); }
+
+    .custom-improvement-box {
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px solid #b7c7d6;
+      border-radius: 16px;
+      background: #eef5f8;
+      text-align: left;
+    }
+
+    .optional-tag {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      color: #ffffff;
+      background: var(--teal);
+      font-size: 0.72rem;
+      font-weight: 950;
+      vertical-align: 2px;
+    }
+
+    .custom-improvement-box input {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 9px;
+      padding: 12px 14px;
+      border: 1px solid #b7c7d6;
+      border-radius: 12px;
+      color: var(--text);
+      background: #ffffff;
+    }
+
+    .custom-improvement-box input:focus { outline: 3px solid rgba(15,118,110,0.16); border-color: var(--teal); }
+
+    .custom-improvement-box.inline {
+      margin: 0 0 16px;
+      padding: 13px;
+    }
+
+    .custom-improvement-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: stretch;
+      margin-top: 9px;
+    }
+
+    .custom-improvement-box.inline input { margin-top: 0; }
+    .custom-improvement-controls .btn { min-height: 52px; }
+    .custom-improvement-added { color: var(--good); font-weight: 850; }
+
+    .sync-status {
+      position: fixed;
+      z-index: 1000;
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      max-width: min(320px, calc(100vw - 20px));
+      padding: 8px 11px;
+      border: 1px solid #b7c7d6;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.96);
+      color: var(--muted);
+      box-shadow: 0 7px 22px rgba(31,56,82,0.14);
+      font-size: 0.78rem;
+      font-weight: 750;
+      line-height: 1.2;
+      pointer-events: none;
+    }
+
+    .sync-status.saving { color: var(--accent-strong); border-color: #93b4f4; }
+    .sync-status.saved { color: var(--good); border-color: #86c69a; }
+    .sync-status.offline { color: #8a5a00; border-color: #d8b36a; }
+
+    @media (max-width: 760px) {
+      body { padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+      .card { padding: 17px; border-radius: 16px; }
+      .field-grid, .rank-layout, .break-layout { grid-template-columns: 1fr; }
+      .panel { min-height: auto; }
+      .pool-panel { order: -1; }
+      .likert-scale { gap: 4px; }
+      .likert-scale label { min-height: 40px; border-radius: 9px; }
+      .marker-label { max-width: min(270px, calc(100vw - 24px)); font-size: 0.69rem; padding: 3px 5px; }
+      .slider-wrap { margin-top: 72px; padding-inline: 2px; }
+      .actions { flex-direction: column; }
+      .btn { width: 100%; }
+      .scale-labels { font-size: 0.78rem; }
+      .game-grid { margin: 0 auto; }
+      .improvement-option { grid-template-columns: 1fr; gap: 6px; }
+      .instruction-card { min-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+      .instruction-sentence { font-size: clamp(1.45rem, 7.2vw, 2.15rem); }
+      .source-note { text-align: center; }
+      .custom-improvement-controls { grid-template-columns: 1fr; }
+      .custom-improvement-controls .btn { width: 100%; }
+    }
+
+    @media (max-width: 380px) {
+      .improvement-option { grid-template-columns: 1fr; }
+      .scale-anchors { font-size: 0.72rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main id="app" class="app"></main>
+  <div id="syncStatus" class="sync-status" role="status" aria-live="polite">Подготовка сохранения…</div>
+
+  <script>
+    const DATA_VERSION = "teen_improvement_survey_v14";
+    const RECEIVER_URL = "https://functions.yandexcloud.net/d4emijparrc706coq789";
+    const BACKUP_KEY = "teen_social_survey_v14_backup";
+    const OUTBOX_KEY = "teen_social_survey_v14_outbox";
+    const DIRTY_KEY = "teen_social_survey_v14_dirty";
+    const MAX_SYNC_EVENTS = 20;
+    const REQUIRED = true;
+    const RANKING_SIZE = 5;
+    const EXCLUSION_POSITIONS = [2, 4];
+    const POSITIVE_TARGET_COUNT = 2;
+    const SIMILAR_RATING_OFFSETS = [-3, -2, -1, 1, 2, 3];
+    const IMPROVEMENT_POOL_REVIEWED_AT = "2026-07-15";
+
+    const SOURCE_LABELS = {
+      teenagers: "подростки вашего возраста",
+      adults: "россияне со средним возрастом 45 лет",
+      neutral: "нейтральное условие"
+    };
+
+    const categories = [
+      {
+        key: "school_improvements",
+        title: "School",
+        title_ru: "Улучшения в школе",
+        improvements: ["Начинать занятия позже", "Сократить объём домашних заданий", "Добавить больше практических занятий", "Разрешить свободнее выбирать учебные предметы", "Увеличить продолжительность перемен", "Создать комнаты для тихого отдыха", "Расширить доступ к школьному психологу", "Сделать правила школьной формы гибче", "Добавить больше кружков по интересам", "Ввести анонимную обратную связь о занятиях", "Сделать критерии оценивания понятнее", "Уменьшить число учеников в классе", "Обновить оборудование и учебные материалы", "Усилить подготовку к экзаменам", "Добавить обязательные часы самостоятельной подготовки", "Чаще сообщать родителям об успеваемости", "Усилить контроль посещаемости", "Сделать школьное питание качественнее", "Расширить профориентацию", "Ввести единые правила поведения на уроках"],
+        relevance: {
+          "Начинать занятия позже": "teen_oriented", "Сократить объём домашних заданий": "teen_oriented",
+          "Добавить больше практических занятий": "teen_oriented", "Разрешить свободнее выбирать учебные предметы": "teen_oriented",
+          "Увеличить продолжительность перемен": "teen_oriented", "Создать комнаты для тихого отдыха": "teen_oriented",
+          "Расширить доступ к школьному психологу": "teen_oriented", "Сделать правила школьной формы гибче": "teen_oriented",
+          "Добавить больше кружков по интересам": "teen_oriented", "Ввести анонимную обратную связь о занятиях": "teen_oriented",
+          "Сделать критерии оценивания понятнее": "adult_oriented", "Уменьшить число учеников в классе": "adult_oriented",
+          "Обновить оборудование и учебные материалы": "adult_oriented", "Усилить подготовку к экзаменам": "adult_oriented",
+          "Добавить обязательные часы самостоятельной подготовки": "adult_oriented", "Чаще сообщать родителям об успеваемости": "adult_oriented",
+          "Усилить контроль посещаемости": "adult_oriented", "Сделать школьное питание качественнее": "adult_oriented",
+          "Расширить профориентацию": "adult_oriented", "Ввести единые правила поведения на уроках": "adult_oriented"
+        }
+      },
+      {
+        key: "university_application_improvements",
+        title: "University Applications",
+        title_ru: "Поступление в университет",
+        improvements: ["Бесплатные индивидуальные консультации", "Единый календарь сроков подачи документов", "Помощь с выбором программы и университета", "Помощь с мотивационным письмом", "Пробные вступительные собеседования", "Дополнительная подготовка к вступительным экзаменам", "Единая база стипендий и грантов", "Снижение или отмена платы за подачу документов", "Организованные поездки и дни открытых дверей", "Наставник из числа студентов университета", "Единый портал для подачи заявлений", "Личный пошаговый план поступления", "Регулярная проверка прогресса школьным консультантом", "Информационные встречи для родителей", "Более понятные правила рекомендательных писем", "Чёткое объяснение требований к поступающим", "Сервис для сравнения программ и университетов", "Проверенные стажировки и волонтёрские возможности", "Информация об академическом отпуске и годе перерыва", "Психологическая поддержка в период поступления"],
+        relevance: {
+          "Бесплатные индивидуальные консультации": "teen_oriented", "Единый календарь сроков подачи документов": "adult_oriented",
+          "Помощь с выбором программы и университета": "teen_oriented", "Помощь с мотивационным письмом": "teen_oriented",
+          "Пробные вступительные собеседования": "teen_oriented", "Дополнительная подготовка к вступительным экзаменам": "adult_oriented",
+          "Единая база стипендий и грантов": "teen_oriented", "Снижение или отмена платы за подачу документов": "teen_oriented",
+          "Организованные поездки и дни открытых дверей": "teen_oriented", "Наставник из числа студентов университета": "teen_oriented",
+          "Единый портал для подачи заявлений": "adult_oriented", "Личный пошаговый план поступления": "teen_oriented",
+          "Регулярная проверка прогресса школьным консультантом": "adult_oriented", "Информационные встречи для родителей": "adult_oriented",
+          "Более понятные правила рекомендательных писем": "adult_oriented", "Чёткое объяснение требований к поступающим": "adult_oriented",
+          "Сервис для сравнения программ и университетов": "teen_oriented", "Проверенные стажировки и волонтёрские возможности": "adult_oriented",
+          "Информация об академическом отпуске и годе перерыва": "teen_oriented", "Психологическая поддержка в период поступления": "teen_oriented"
+        }
+      },
+      {
+        key: "teen_social_programs",
+        title: "Social Programs for Teenagers",
+        title_ru: "Социальные программы для подростков",
+        improvements: ["Единый подростковый абонемент на культурные и спортивные мероприятия", "Бесплатные билеты на концерты, выставки и спектакли для подростков", "Бесплатные спортивные секции для подростков", "Льготный проезд для школьников и студентов", "Бесплатные курсы программирования и цифровых навыков", "Муниципальные молодёжные центры с бесплатными занятиями", "Программа временной занятости подростков на каникулах", "Гранты на подростковые общественные проекты", "Бесплатные творческие студии и мастерские", "Доступные поездки по России для школьников", "Единый сервис информации о программах для подростков", "Бесплатная психологическая помощь вне школы", "Бесплатные консультации по выбору профессии", "Программа наставничества с молодыми специалистами", "Поддержка подросткового волонтёрства", "Бесплатные летние образовательные лагеря", "Бесплатные курсы финансовой грамотности", "Программы безопасного поведения в интернете", "Молодёжные экологические проекты", "Бесплатные юридические консультации для подростков"],
+        relevance: {
+          "Единый подростковый абонемент на культурные и спортивные мероприятия": "teen_oriented", "Бесплатные билеты на концерты, выставки и спектакли для подростков": "teen_oriented",
+          "Бесплатные спортивные секции для подростков": "teen_oriented", "Льготный проезд для школьников и студентов": "teen_oriented",
+          "Бесплатные курсы программирования и цифровых навыков": "teen_oriented", "Муниципальные молодёжные центры с бесплатными занятиями": "teen_oriented",
+          "Программа временной занятости подростков на каникулах": "teen_oriented", "Гранты на подростковые общественные проекты": "teen_oriented",
+          "Бесплатные творческие студии и мастерские": "teen_oriented", "Доступные поездки по России для школьников": "teen_oriented",
+          "Единый сервис информации о программах для подростков": "adult_oriented", "Бесплатная психологическая помощь вне школы": "adult_oriented",
+          "Бесплатные консультации по выбору профессии": "adult_oriented", "Программа наставничества с молодыми специалистами": "adult_oriented",
+          "Поддержка подросткового волонтёрства": "adult_oriented", "Бесплатные летние образовательные лагеря": "adult_oriented",
+          "Бесплатные курсы финансовой грамотности": "adult_oriented", "Программы безопасного поведения в интернете": "adult_oriented",
+          "Молодёжные экологические проекты": "adult_oriented", "Бесплатные юридические консультации для подростков": "adult_oriented"
+        }
+      }
+    ];
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    const assignedSources = shuffle(["teenagers", "adults", "neutral"]);
+    categories.forEach((cat, i) => {
+      cat.source_type = assignedSources[i];
+      cat.source_label = SOURCE_LABELS[assignedSources[i]];
+    });
+
+    function readStoredJson(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw == null ? fallback : JSON.parse(raw);
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function createEventId() {
+      if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+        return globalThis.crypto.randomUUID();
+      }
+      return "E" + Date.now() + "_" + Math.random().toString(36).slice(2, 14);
+    }
+
+    function createFreshState() {
+      return {
+        version: DATA_VERSION,
+        improvement_pool_reviewed_at: IMPROVEMENT_POOL_REVIEWED_AT,
+        participant_id: "P" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+        started_at_iso: new Date().toISOString(),
+        started_at_local: new Date().toLocaleString(),
+        completed: false,
+        current_screen: "",
+        current_context: {},
+        event_seq: 0,
+        demographics: {},
+        bpns_draft: Array(7).fill(null),
+        bpns_autonomy_satisfaction: {},
+        category_source_mapping: categories.map(c => ({
+          category_key: c.key,
+          category_title: c.title,
+          category_title_ru: c.title_ru,
+          source_type: c.source_type,
+          source_label: c.source_label
+        })),
+        categories: categories.map(c => ({
+          category_key: c.key,
+          category_title: c.title,
+          category_title_ru: c.title_ru,
+          source_type: c.source_type,
+          source_label: c.source_label,
+          preset_improvements: c.improvements.slice(),
+          relevance_by_improvement: Object.assign({}, c.relevance),
+          custom_improvement: "",
+          custom_improvement_draft: "",
+          ranking: Array(RANKING_SIZE).fill(null),
+          pool: shuffle(c.improvements),
+          ratings: {},
+          rating_drafts: {},
+          group_ratings: {},
+          group_feedback_by_improvement: {},
+          low_support_improvements: [],
+          confirmation_targets: [],
+          confirmation_target_rule: "",
+          exclusion_targets: [],
+          exclusion_target_rule: "",
+          positive_targets: [],
+          similar_targets: [],
+          attention_draft: "",
+          attention_check: null
+        })),
+        events: []
+      };
+    }
+
+    function normalizeLoadedState(candidate) {
+      if (!candidate || candidate.version !== DATA_VERSION || !candidate.participant_id || !Array.isArray(candidate.categories)) {
+        return null;
+      }
+      candidate.events = Array.isArray(candidate.events) ? candidate.events : [];
+      let maxSequence = Number(candidate.event_seq) || 0;
+      candidate.events.forEach(event => {
+        if (!event.event_id) event.event_id = createEventId();
+        if (!Number.isInteger(event.event_seq)) event.event_seq = ++maxSequence;
+        maxSequence = Math.max(maxSequence, event.event_seq);
+      });
+      candidate.event_seq = maxSequence;
+      candidate.completed = Boolean(candidate.completed || candidate.finished_at_iso);
+      candidate.current_screen = candidate.current_screen || (candidate.completed ? "final" : "intro");
+      candidate.current_context = candidate.current_context && typeof candidate.current_context === "object" ? candidate.current_context : {};
+      candidate.demographics = candidate.demographics || {};
+      candidate.bpns_draft = Array.isArray(candidate.bpns_draft) ? candidate.bpns_draft : Array(7).fill(null);
+      candidate.bpns_autonomy_satisfaction = candidate.bpns_autonomy_satisfaction || {};
+      candidate.categories.forEach(cat => {
+        cat.custom_improvement_draft = cat.custom_improvement_draft || "";
+        cat.rating_drafts = cat.rating_drafts || {};
+        cat.attention_draft = cat.attention_draft || "";
+      });
+      return candidate;
+    }
+
+    const restoredState = normalizeLoadedState(readStoredJson(BACKUP_KEY, null));
+    const restoredSession = Boolean(restoredState);
+    let state = restoredState || createFreshState();
+
+    const app = document.getElementById("app");
+
+    function h(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    let outbox = readStoredJson(OUTBOX_KEY, []);
+    if (!Array.isArray(outbox)) outbox = [];
+    let dirtySnapshot = readStoredJson(DIRTY_KEY, 0) === 1 || restoredSession;
+    let localRevision = 0;
+    let syncInFlight = false;
+    let retryAttempt = 0;
+    let syncTimer = null;
+
+    function setSyncStatus(kind, text) {
+      const el = document.getElementById("syncStatus");
+      if (el) {
+        el.className = `sync-status ${kind || ""}`.trim();
+        el.textContent = text;
+      }
+      const finalStatus = document.getElementById("finalSaveStatus");
+      if (finalStatus) {
+        if (kind === "saved") finalStatus.textContent = "Ответы сохранены. Теперь эту страницу можно закрыть.";
+        else if (kind === "offline") finalStatus.textContent = "Ответы сохранены на этом устройстве и будут отправлены автоматически после восстановления связи.";
+        else finalStatus.textContent = "Ответы сохраняются…";
+      }
+    }
+
+    function persistLocally() {
+      try {
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(state));
+        localStorage.setItem(OUTBOX_KEY, JSON.stringify(outbox));
+        if (dirtySnapshot) localStorage.setItem(DIRTY_KEY, "1");
+        else localStorage.removeItem(DIRTY_KEY);
+        return true;
+      } catch (error) {
+        setSyncStatus("offline", "Не удалось создать локальную копию");
+        return false;
+      }
+    }
+
+    function sourceConditionCode() {
+      const code = { teenagers: "T", adults: "A", neutral: "N" };
+      return (state.category_source_mapping || []).map(item => code[item.source_type] || "X").join("").slice(0, 32);
+    }
+
+    function deviceType() {
+      const narrow = typeof matchMedia === "function" && matchMedia("(max-width: 760px)").matches;
+      return narrow || navigator.maxTouchPoints > 0 ? "mobile" : "desktop";
+    }
+
+    function stateForServer() {
+      const snapshot = JSON.parse(JSON.stringify(state));
+      delete snapshot.events;
+      return snapshot;
+    }
+
+    function wireEvent(event) {
+      return {
+        event_id: event.event_id,
+        event_seq: event.event_seq,
+        client_time: event.at_iso,
+        event_type: String(event.trial_type || "survey_event").slice(0, 64),
+        screen_id: String(event.screen_id || state.current_screen || "").slice(0, 128),
+        category_id: String(event.category_id || event.category_key || "").slice(0, 128),
+        payload: JSON.parse(JSON.stringify(event))
+      };
+    }
+
+    function buildSyncPayload(events) {
+      const now = new Date().toISOString();
+      return {
+        participant_id: state.participant_id,
+        study_version: state.version,
+        session: {
+          started_at: state.started_at_iso,
+          updated_at: now,
+          completed: Boolean(state.completed),
+          current_screen: state.current_screen || "intro",
+          condition_code: sourceConditionCode(),
+          state: stateForServer(),
+          device_type: deviceType()
+        },
+        events
+      };
+    }
+
+    function scheduleSync(delay = 250) {
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => {
+        syncTimer = null;
+        flushSyncQueue();
+      }, delay);
+    }
+
+    function markStateDirty(delay = 250) {
+      dirtySnapshot = true;
+      localRevision += 1;
+      persistLocally();
+      setSyncStatus(navigator.onLine === false ? "offline" : "saving", navigator.onLine === false ? "Нет сети — сохранено на устройстве" : "Сохраняем ответы…");
+      scheduleSync(delay);
+    }
+
+    function record(event) {
+      const storedEvent = Object.assign({
+        event_id: createEventId(),
+        event_seq: ++state.event_seq,
+        at_iso: new Date().toISOString(),
+        at_local: new Date().toLocaleString(),
+        screen_id: state.current_screen || "",
+        category_id: event.category_key || ""
+      }, event);
+      state.events.push(storedEvent);
+      outbox.push(wireEvent(storedEvent));
+      state.sync_initialized = true;
+      markStateDirty(40);
+    }
+
+    function setScreen(screenId, context = {}) {
+      state.current_screen = screenId;
+      state.current_context = context;
+      markStateDirty(120);
+    }
+
+    async function flushSyncQueue() {
+      if (syncInFlight || (!dirtySnapshot && outbox.length === 0)) return;
+      if (navigator.onLine === false) {
+        setSyncStatus("offline", "Нет сети — сохранено на устройстве");
+        scheduleSync(5000);
+        return;
+      }
+
+      const batch = outbox.slice(0, MAX_SYNC_EVENTS);
+      const sentIds = new Set(batch.map(event => event.event_id));
+      const sentRevision = localRevision;
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      const timeout = controller ? setTimeout(() => controller.abort(), 10000) : null;
+      syncInFlight = true;
+      setSyncStatus("saving", "Сохраняем ответы…");
+
+      try {
+        const response = await fetch(RECEIVER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(buildSyncPayload(batch)),
+          cache: "no-store",
+          signal: controller ? controller.signal : undefined
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
+
+        outbox = outbox.filter(event => !sentIds.has(event.event_id));
+        if (outbox.length === 0 && localRevision === sentRevision) dirtySnapshot = false;
+        retryAttempt = 0;
+        persistLocally();
+
+        if (!dirtySnapshot && outbox.length === 0) {
+          setSyncStatus("saved", "Ответы сохранены");
+          if (state.completed) {
+            try {
+              localStorage.removeItem(BACKUP_KEY);
+              localStorage.removeItem(OUTBOX_KEY);
+              localStorage.removeItem(DIRTY_KEY);
+            } catch (error) {}
+          }
+        } else {
+          scheduleSync(80);
+        }
+      } catch (error) {
+        retryAttempt += 1;
+        persistLocally();
+        setSyncStatus("offline", navigator.onLine === false ? "Нет сети — сохранено на устройстве" : "Связь прервалась — повторяем отправку");
+        const retryDelay = Math.min(30000, 1000 * (2 ** Math.min(retryAttempt - 1, 5))) + Math.floor(Math.random() * 400);
+        scheduleSync(retryDelay);
+      } finally {
+        if (timeout) clearTimeout(timeout);
+        syncInFlight = false;
+      }
+    }
+
+    function flushWithBeacon() {
+      persistLocally();
+      if ((!dirtySnapshot && outbox.length === 0) || !navigator.sendBeacon) return;
+      let batch = outbox.slice(0, 8);
+      let body = JSON.stringify(buildSyncPayload(batch));
+      while (body.length > 60000 && batch.length > 0) {
+        batch = batch.slice(0, -1);
+        body = JSON.stringify(buildSyncPayload(batch));
+      }
+      if (body.length <= 60000) {
+        navigator.sendBeacon(RECEIVER_URL, new Blob([body], { type: "text/plain;charset=UTF-8" }));
+      }
+    }
+
+    function migrateLegacyEvents() {
+      if (!restoredSession || state.sync_initialized) return;
+      const queuedIds = new Set(outbox.map(event => event.event_id));
+      state.events.forEach(event => {
+        if (!queuedIds.has(event.event_id)) outbox.push(wireEvent(event));
+      });
+      state.sync_initialized = true;
+      dirtySnapshot = true;
+      persistLocally();
+    }
+
+    migrateLegacyEvents();
+    window.addEventListener("online", () => scheduleSync(0));
+    window.addEventListener("offline", () => setSyncStatus("offline", "Нет сети — сохранено на устройстве"));
+    window.addEventListener("pagehide", flushWithBeacon);
+    setInterval(() => {
+      if (dirtySnapshot || outbox.length) scheduleSync(0);
+    }, 15000);
+
+    function setHTML(html) {
+      app.innerHTML = html;
+      window.scrollTo(0, 0);
+    }
+
+    function btn(label, id, primary = true, disabled = false) {
+      return `<button id="${id}" class="btn ${primary ? "primary" : ""}" ${disabled ? "disabled" : ""}>${label}</button>`;
+    }
+
+    function progressDots(current, total) {
+      return `<div class="instruction-progress" aria-label="Шаг ${current + 1} из ${total}">${Array.from({ length: total }, (_, i) => `<span class="${i === current ? "active" : ""}"></span>`).join("")}</div>`;
+    }
+
+    function showIntro() {
+      setScreen("intro");
+      setHTML(`
+        <section class="card narrow">
+          <h1>Социальный опрос российских подростков</h1>
+          <p>Мы хотим понять, какие изменения подростки считают наиболее полезными в школе, при поступлении в университет и в сфере социальных программ для подростков.</p>
+          <p>Мы попросим вас выбрать пять предложений, расположить их по приоритету и оценить.</p>
+          <div class="warning"><b>Важно:</b> здесь нет правильных или неправильных ответов. Нас интересует только ваше личное мнение.</div>
+          <div class="warning"><b>Обратите внимание:</b> мы будем учитывать не все голоса. Если предложение окажется непопулярным по результатам голосования, голос за него не будет засчитан.</div>
+          <p class="muted">Ответы сохраняются автоматически. Если интернет временно пропадёт, страница сохранит их на устройстве и повторит отправку после восстановления связи.</p>
+          <div class="actions">${btn("Продолжить", "continueIntro")}</div>
+        </section>
+      `);
+      document.getElementById("continueIntro").onclick = () => {
+        record({ trial_type: "intro_continue" });
+        showDemographics();
+      };
+    }
+
+    function showDemographics() {
+      setScreen("demographics");
+      setHTML(`
+        <section class="card narrow">
+          <h2>Короткая анкета</h2>
+          <p>Пожалуйста, ответьте на несколько вопросов о себе.</p>
+          <div class="field-grid">
+            <div class="field"><label for="age">Возраст</label><input id="age" inputmode="numeric" autocomplete="off" value="${h(state.demographics.age || "")}" /></div>
+            <div class="field"><label for="gender">Пол</label><select id="gender"><option value="">Выберите</option><option value="Мужской" ${state.demographics.gender === "Мужской" ? "selected" : ""}>Мужской</option><option value="Женский" ${state.demographics.gender === "Женский" ? "selected" : ""}>Женский</option></select></div>
+            <div class="field"><label for="classCourse">Класс / курс</label><input id="classCourse" autocomplete="off" value="${h(state.demographics.class_or_course || "")}" /></div>
+            <div class="field"><label for="city">Город</label><input id="city" autocomplete="off" value="${h(state.demographics.city || "")}" /></div>
+          </div>
+          <div id="demoError" class="error">Пожалуйста, укажите возраст и пол.</div>
+          <div class="actions">${btn("Продолжить", "continueDemo")}</div>
+        </section>
+      `);
+
+      const demographicFields = {
+        age: document.getElementById("age"),
+        gender: document.getElementById("gender"),
+        class_or_course: document.getElementById("classCourse"),
+        city: document.getElementById("city")
+      };
+      const captureDemographicDraft = () => {
+        state.demographics = {
+          age: demographicFields.age.value.trim(),
+          gender: demographicFields.gender.value,
+          class_or_course: demographicFields.class_or_course.value.trim(),
+          city: demographicFields.city.value.trim()
+        };
+        markStateDirty(350);
+      };
+      Object.entries(demographicFields).forEach(([field, element]) => {
+        element.addEventListener("input", captureDemographicDraft);
+        element.addEventListener("change", () => {
+          captureDemographicDraft();
+          record({ trial_type: "demographic_field_changed", field, value: state.demographics[field] || "" });
+        });
+      });
+
+      document.getElementById("continueDemo").onclick = () => {
+        const age = document.getElementById("age").value.trim();
+        const gender = document.getElementById("gender").value;
+        if (!age || !gender) {
+          document.getElementById("demoError").style.display = "block";
+          return;
+        }
+        state.demographics = {
+          age,
+          gender,
+          class_or_course: document.getElementById("classCourse").value.trim(),
+          city: document.getElementById("city").value.trim()
+        };
+        record({ trial_type: "demographics", responses: Object.assign({}, state.demographics) });
+        showBPNS();
+      };
+    }
+
+    const autonomyItems = [
+      { source_item: 1, text: "Я чувствую, что имею полную свободу в выборе жизненного пути.", scoring: "direct" },
+      { source_item: 4, text: "Я чувствую, что жизнь течёт мимо меня.", scoring: "reverse" },
+      { source_item: 8, text: "Я чувствую себя свободным(ой) в выражении своих идей и мнений.", scoring: "direct" },
+      { source_item: 11, text: "Обычно я делаю то, что мне говорят.", scoring: "reverse", wording_modified: true },
+      { source_item: 14, text: "Люди, которые меня окружают, всегда учитывают моё мнение.", scoring: "direct" },
+      { source_item: 17, text: "Я чувствую, что всегда могу быть самим(ой) собой.", scoring: "direct" },
+      { source_item: "retained_final", text: "Мне кажется, что мои возможности выбора часто ограничивают.", scoring: "reverse", wording_retained: true }
+    ];
+
+    function showBPNS() {
+      setScreen("bpns");
+      const questions = autonomyItems.map((item, idx) => {
+        const draftValue = Number(state.bpns_draft[idx]);
+        const scale = [1,2,3,4,5,6,7].map(n => `
+          <span>
+            <input type="radio" id="bpns_${idx}_${n}" name="bpns_${idx}" value="${n}" ${draftValue === n ? "checked" : ""} />
+            <label for="bpns_${idx}_${n}">${n}</label>
+          </span>
+        `).join("");
+        return `
+          <div class="likert-item">
+            <div class="likert-prompt">${idx + 1}. ${h(item.text)}</div>
+            <div class="likert-scale">${scale}</div>
+            <div class="scale-anchors"><span>1 — совершенно не согласен(на)</span><span>7 — полностью согласен(на)</span></div>
+          </div>
+        `;
+      }).join("");
+
+      setHTML(`
+        <section class="card wide">
+          <h2>Самостоятельность и свобода выбора</h2>
+          <p>Ниже приведены утверждения из шкалы автономии. Отметьте, насколько вы согласны с каждым утверждением.</p>
+          <div class="likert-list">${questions}</div>
+          <div id="bpnsError" class="error">Пожалуйста, ответьте на все утверждения.</div>
+          <div class="actions">${btn("Продолжить", "continueBPNS")}</div>
+        </section>
+      `);
+
+      autonomyItems.forEach((item, index) => {
+        document.querySelectorAll(`input[name="bpns_${index}"]`).forEach(input => {
+          input.addEventListener("change", () => {
+            state.bpns_draft[index] = Number(input.value);
+            record({
+              trial_type: "bpns_item_changed",
+              item_index: index + 1,
+              source_item: item.source_item,
+              rating_value: Number(input.value)
+            });
+          });
+        });
+      });
+
+      document.getElementById("continueBPNS").onclick = () => {
+        const raw = [];
+        for (let i = 0; i < autonomyItems.length; i++) {
+          const checked = document.querySelector(`input[name="bpns_${i}"]:checked`);
+          if (!checked) {
+            document.getElementById("bpnsError").style.display = "block";
+            return;
+          }
+          raw.push(Number(checked.value));
+        }
+        state.bpns_draft = raw.slice();
+        const scored = raw.map((v, i) => autonomyItems[i].scoring === "reverse" ? 8 - v : v);
+        const mean = scored.reduce((a,b) => a + b, 0) / scored.length;
+        state.bpns_autonomy_satisfaction = {
+          source_items: autonomyItems.map(item => item.source_item),
+          item_wording: autonomyItems.map(item => item.text),
+          raw_responses_1_to_7: raw,
+          scoring: autonomyItems.map(item => item.scoring),
+          scored_autonomy_values: scored,
+          mean: Number(mean.toFixed(4))
+        };
+        record({ trial_type: "bpns_autonomy_subscale", responses: state.bpns_autonomy_satisfaction });
+        showSurveyIntro();
+      };
+    }
+
+    function showSurveyIntro(step = 0) {
+      setScreen("survey_instruction", { step });
+      const sentences = [
+        "В каждой категории выберите 5 предложений, которые кажутся вам наиболее полезными, и расположите их от самого важного до наименее важного.",
+        "На экране со списком можно при желании добавить одно собственное предложение; если вы его добавите, включите его в рейтинг."
+      ];
+      setHTML(`
+        <section class="instruction-stage">
+          <div class="card instruction-card">
+            <div class="pill">Опрос об улучшениях</div>
+            ${progressDots(step, sentences.length)}
+            <div class="instruction-sentence">${sentences[step]}</div>
+            <div class="actions">${btn(step < sentences.length - 1 ? "Далее" : "Начать", "nextSurveyInstruction")}</div>
+          </div>
+        </section>
+      `);
+      document.getElementById("nextSurveyInstruction").onclick = () => {
+        record({ trial_type: "survey_instruction", instruction_step: step + 1, instruction_text: sentences[step] });
+        if (step < sentences.length - 1) {
+          showSurveyIntro(step + 1);
+        } else {
+          record({ trial_type: "improvement_task_started", source_mapping: state.category_source_mapping });
+          showCategoryIntro(0);
+        }
+      };
+    }
+
+    function catData(index) { return state.categories[index]; }
+
+    function relevanceFor(cat, improvement) {
+      return cat.relevance_by_improvement[improvement] || "uncoded";
+    }
+
+    function chooseConfirmationTargets(cat) {
+      cat.confirmation_targets = cat.ranking.slice();
+      cat.confirmation_target_rule = "confirm_all_five_ranked_proposals";
+
+      if (cat.source_type === "neutral") {
+        cat.exclusion_targets = [];
+        cat.exclusion_target_rule = "none_in_neutral_condition";
+        return cat.confirmation_targets;
+      }
+
+      const fixedPositionTargets = EXCLUSION_POSITIONS
+        .map(position => cat.ranking[position - 1])
+        .filter(Boolean);
+      const rankedCustomTarget = cat.custom_improvement && cat.ranking.includes(cat.custom_improvement)
+        ? [cat.custom_improvement]
+        : [];
+      cat.exclusion_targets = Array.from(new Set([...fixedPositionTargets, ...rankedCustomTarget]));
+      cat.exclusion_target_rule = "rank_positions_2_and_4_plus_ranked_custom_proposal";
+      return cat.confirmation_targets;
+    }
+
+    function showCategoryIntro(index) {
+      const cat = catData(index);
+      setScreen("category_intro", { index });
+      setHTML(`
+        <section class="card narrow">
+          <div class="pill">Категория ${index + 1} из ${state.categories.length}</div>
+          <h2>${h(cat.category_title_ru)}</h2>
+          <p>Выберите из списка 5 предложений. Нажмите на предложение, а затем на нужное место от 1 до 5.</p>
+          <p class="muted">На следующем экране вы также сможете добавить одно собственное предложение прямо к общему списку.</p>
+          <div class="actions">${btn("Начать категорию", "startCategory")}</div>
+        </section>
+      `);
+      document.getElementById("startCategory").onclick = () => {
+        record({
+          trial_type: "category_started",
+          category_key: cat.category_key,
+          source_type: cat.source_type,
+          custom_improvement: cat.custom_improvement
+        });
+        showRanking(index, null);
+      };
+    }
+
+    function showRanking(index, selectedImprovement) {
+      const cat = catData(index);
+      setScreen("ranking", { index });
+      const slots = cat.ranking.map((improvement, i) => `
+        <div class="improvement-option ${improvement ? "" : "empty"}">
+          <button class="slot ${selectedImprovement && improvement === selectedImprovement ? "selected" : ""}" data-slot="${i}">
+            <span class="slot-number">${i + 1}</span>
+            <span>${improvement ? h(improvement) : `<span class="slot-empty">Нажмите, чтобы поставить сюда выбранное улучшение</span>`}</span>
+          </button>
+        </div>
+      `).join("");
+      const pool = cat.pool.map(improvement => `
+        <div class="improvement-option">
+          <button class="improvement-btn ${selectedImprovement === improvement ? "selected" : ""}" data-improvement="${h(improvement)}">${h(improvement)}</button>
+        </div>
+      `).join("");
+      const customImprovementControl = cat.custom_improvement ? `
+        <div class="custom-improvement-box inline">
+          <div class="custom-improvement-added">✓ Добавлено ваше предложение: ${h(cat.custom_improvement)}</div>
+          <div class="muted small">Чтобы продолжить, включите своё предложение в рейтинг.</div>
+        </div>
+      ` : `
+        <div class="custom-improvement-box inline">
+          <label for="rankingCustomImprovement"><b>Добавить своё предложение</b><span class="optional-tag">НЕОБЯЗАТЕЛЬНО</span></label>
+          <div class="custom-improvement-controls">
+            <input id="rankingCustomImprovement" maxlength="120" autocomplete="off" placeholder="Ваше предложение" value="${h(cat.custom_improvement_draft || "")}" />
+            <button id="addRankingCustomImprovement" class="btn" type="button">Добавить</button>
+          </div>
+          <div id="rankingCustomImprovementError" class="error">Введите предложение, которого ещё нет в списке.</div>
+        </div>
+      `;
+      const selectedNote = selectedImprovement ? `<p class="warning"><b>Выбрано:</b> ${h(selectedImprovement)}. Теперь нажмите на позицию в рейтинге.</p>` : `<p class="muted">Сначала выберите улучшение из списка или из уже заполненной позиции.</p>`;
+      const customRequirementMet = !cat.custom_improvement || cat.ranking.includes(cat.custom_improvement);
+      const done = cat.ranking.every(Boolean) && customRequirementMet;
+      const rankedCount = cat.ranking.filter(Boolean).length;
+
+      setHTML(`
+        <section class="card wide">
+          <div class="pill">${h(cat.category_title_ru)}</div>
+          <h2>Ранжирование улучшений</h2>
+          <p>Из всех доступных вариантов выберите <b>5 предложений</b> и расположите их от 1 до 5. <b>На 1 месте</b> — самое важное для вас предложение; <b>на 5 месте</b> — наименее важное из выбранных пяти.</p>
+          ${selectedNote}
+          <div class="rank-layout">
+            <div class="panel ranking-panel"><h4>Ваш рейтинг · ${rankedCount}/${RANKING_SIZE}</h4>${slots}</div>
+            <div class="panel pool-panel"><h4>Выберите 5 предложений</h4>${customImprovementControl}${pool || `<p class="muted">Все доступные предложения уже добавлены в рейтинг.</p>`}<div id="dropPool" class="drop-pool ${selectedImprovement ? "visible" : ""}">Вернуть выбранное предложение в список</div></div>
+          </div>
+          <div id="rankError" class="error">Пожалуйста, расположите ровно 5 предложений и включите в рейтинг собственное предложение, если вы его добавили.</div>
+          <div class="actions">${btn("Продолжить", "continueRanking", true, !done)}</div>
+        </section>
+      `);
+
+      document.querySelectorAll("[data-improvement]").forEach(el => {
+        el.onclick = () => showRanking(index, el.getAttribute("data-improvement"));
+      });
+
+      const customInput = document.getElementById("rankingCustomImprovement");
+      const customButton = document.getElementById("addRankingCustomImprovement");
+      const addCustomImprovement = () => {
+        if (!customInput || cat.custom_improvement) return;
+        const customImprovement = customInput.value.trim().replace(/\s+/g, " ");
+        const duplicate = customImprovement && cat.preset_improvements.some(improvement => improvement.toLocaleLowerCase() === customImprovement.toLocaleLowerCase());
+        if (!customImprovement || duplicate) {
+          document.getElementById("rankingCustomImprovementError").style.display = "block";
+          return;
+        }
+        cat.custom_improvement = customImprovement;
+        cat.custom_improvement_draft = "";
+        cat.relevance_by_improvement[customImprovement] = "uncoded";
+        if (!cat.pool.includes(customImprovement)) cat.pool.unshift(customImprovement);
+        record({
+          trial_type: "custom_improvement_added",
+          category_key: cat.category_key,
+          source_type: cat.source_type,
+          custom_improvement: customImprovement,
+          context: "ranking_screen"
+        });
+        showRanking(index, customImprovement);
+      };
+      if (customButton) customButton.onclick = addCustomImprovement;
+      if (customInput) {
+        customInput.addEventListener("input", () => {
+          cat.custom_improvement_draft = customInput.value;
+          markStateDirty(350);
+        });
+        customInput.onkeydown = event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            addCustomImprovement();
+          }
+        };
+      }
+
+      document.querySelectorAll("[data-slot]").forEach(el => {
+        el.onclick = () => {
+          const slotIndex = Number(el.getAttribute("data-slot"));
+          const current = cat.ranking[slotIndex];
+          if (!selectedImprovement) {
+            if (current) showRanking(index, current);
+            return;
+          }
+          const previousRanking = cat.ranking.slice();
+          removeImprovementFromRankingAndPool(cat, selectedImprovement);
+          if (current && current !== selectedImprovement) {
+            if (!cat.pool.includes(current)) cat.pool.push(current);
+          }
+          cat.ranking[slotIndex] = selectedImprovement;
+          cat.pool = cat.pool.filter(x => x !== selectedImprovement);
+          record({
+            trial_type: "ranking_changed",
+            category_key: cat.category_key,
+            source_type: cat.source_type,
+            action: "place",
+            slot_position: slotIndex + 1,
+            improvement: selectedImprovement,
+            replaced_improvement: current || "",
+            previous_ranking: previousRanking,
+            ranking: cat.ranking.slice()
+          });
+          showRanking(index, null);
+        };
+      });
+
+      const dropPool = document.getElementById("dropPool");
+      if (dropPool) {
+        dropPool.onclick = () => {
+          if (!selectedImprovement) return;
+          const previousRanking = cat.ranking.slice();
+          removeImprovementFromRankingAndPool(cat, selectedImprovement);
+          if (!cat.pool.includes(selectedImprovement)) cat.pool.push(selectedImprovement);
+          record({
+            trial_type: "ranking_changed",
+            category_key: cat.category_key,
+            source_type: cat.source_type,
+            action: "remove",
+            improvement: selectedImprovement,
+            previous_ranking: previousRanking,
+            ranking: cat.ranking.slice()
+          });
+          showRanking(index, null);
+        };
+      }
+
+      const continueBtn = document.getElementById("continueRanking");
+      if (continueBtn) {
+        continueBtn.onclick = () => {
+          if (!cat.ranking.every(Boolean) || (cat.custom_improvement && !cat.ranking.includes(cat.custom_improvement))) {
+            document.getElementById("rankError").style.display = "block";
+            return;
+          }
+          chooseConfirmationTargets(cat);
+          record({
+            trial_type: "ranking",
+            category_key: cat.category_key,
+            category_title: cat.category_title,
+            category_title_ru: cat.category_title_ru,
+            source_type: cat.source_type,
+            ranking: cat.ranking.slice(),
+            custom_improvement: cat.custom_improvement,
+            relevance_by_ranked_improvement: cat.ranking.map(improvement => ({ improvement, relevance: relevanceFor(cat, improvement) })),
+            confirmation_targets: cat.confirmation_targets.slice(),
+            confirmation_target_positions: cat.confirmation_targets.map(improvement => cat.ranking.indexOf(improvement) + 1),
+            confirmation_target_rule: cat.confirmation_target_rule,
+            exclusion_targets: cat.exclusion_targets.slice(),
+            exclusion_target_positions: cat.exclusion_targets.map(improvement => cat.ranking.indexOf(improvement) + 1),
+            exclusion_target_rule: cat.exclusion_target_rule
+          });
+          showRankingConfirm(index);
+        };
+      }
+    }
+
+    function removeImprovementFromRankingAndPool(cat, improvement) {
+      cat.ranking = cat.ranking.map(x => x === improvement ? null : x);
+      cat.pool = cat.pool.filter(x => x !== improvement);
+    }
+
+    function showRankingConfirm(index) {
+      const cat = catData(index);
+      setScreen("ranking_confirm", { index });
+      const rows = cat.ranking.map((improvement, i) => `<p><b>${i + 1}.</b> ${h(improvement)}</p>`).join("");
+      setHTML(`
+        <section class="card narrow">
+          <div class="pill">${h(cat.category_title_ru)}</div>
+          <h2>Подтверждение приоритетов</h2>
+          ${rows}
+          <p>Если хотите, вы можете вернуться и изменить порядок улучшений.</p>
+          <div class="actions">
+            ${btn("Подтвердить и продолжить", "confirmRanking")}
+            ${btn("Вернуться и изменить", "backRanking", false)}
+          </div>
+        </section>
+      `);
+      document.getElementById("confirmRanking").onclick = () => {
+        record({ trial_type: "ranking_confirmed", category_key: cat.category_key });
+        showInitialRatingIntro(index);
+      };
+      document.getElementById("backRanking").onclick = () => showRanking(index, null);
+    }
+
+    function showInitialRatingIntro(index) {
+      const cat = catData(index);
+      setScreen("initial_rating_intro", { index });
+      const sentence = "Пожалуйста, оцените, насколько полезным, по вашему мнению, было бы каждое из выбранных предложений.";
+      setHTML(`
+        <section class="instruction-stage">
+          <div class="card instruction-card">
+            <div class="pill">${h(cat.category_title_ru)}</div>
+            <div class="instruction-sentence">${sentence}</div>
+            <div class="actions">${btn("Начать оценивание", "startInitialRatings")}</div>
+          </div>
+        </section>
+      `);
+      document.getElementById("startInitialRatings").onclick = () => {
+        record({ trial_type: "initial_rating_intro", category_key: cat.category_key, instruction_text: sentence });
+        showRating(index, 0, "initial");
+      };
+    }
+
+    function assignGroupRatings(cat) {
+      cat.group_ratings = {};
+      cat.group_feedback_by_improvement = {};
+      cat.positive_targets = [];
+      cat.similar_targets = [];
+      let minimumPrevious = "";
+      let gapRule = cat.source_type === "neutral" ? "not_applicable_control_condition" : "";
+
+      if (cat.exclusion_targets.length) {
+        const exclusionRatings = cat.exclusion_targets.map(improvement => Number(cat.ratings[improvement]?.initial ?? 50));
+        minimumPrevious = Math.min(...exclusionRatings);
+        const requiredSpread = Math.max(0, (cat.exclusion_targets.length - 1) * 2);
+        const strictCap = Math.min(39, Math.floor(minimumPrevious - 18));
+        const flexibleCap = Math.min(39, Math.floor(minimumPrevious - 12));
+        let scoreCap;
+
+        if (strictCap >= requiredSpread) {
+          scoreCap = strictCap;
+          gapRule = "at_least_18_below_lowest_target_rating";
+        } else if (flexibleCap >= requiredSpread) {
+          scoreCap = flexibleCap;
+          gapRule = "at_least_12_below_lowest_target_rating";
+        } else {
+          scoreCap = requiredSpread;
+          gapRule = "distinct_floor_scores_for_already_very_low_rating";
+        }
+
+        const generatedScores = cat.exclusion_targets.map((_, index) =>
+          scoreCap - ((cat.exclusion_targets.length - 1 - index) * 2)
+        );
+
+        cat.exclusion_targets.forEach((improvement, index) => {
+          cat.group_ratings[improvement] = generatedScores[index];
+          cat.group_feedback_by_improvement[improvement] = {
+            condition: "excluded_low_support",
+            offset_from_initial: generatedScores[index] - Number(cat.ratings[improvement].initial)
+          };
+        });
+      }
+
+      const eligibleForPositive = cat.ranking.filter(improvement =>
+        !cat.exclusion_targets.includes(improvement) && Number(cat.ratings[improvement]?.initial) <= 80
+      );
+      cat.positive_targets = shuffle(eligibleForPositive).slice(0, POSITIVE_TARGET_COUNT);
+      cat.similar_targets = cat.ranking.filter(improvement =>
+        !cat.exclusion_targets.includes(improvement) && !cat.positive_targets.includes(improvement)
+      );
+
+      cat.positive_targets.forEach(improvement => {
+        const previous = Number(cat.ratings[improvement].initial);
+        cat.group_ratings[improvement] = previous + 20;
+        cat.group_feedback_by_improvement[improvement] = {
+          condition: cat.source_type === "neutral" ? "control_higher_group_rating" : "higher_group_rating",
+          offset_from_initial: 20
+        };
+      });
+
+      cat.similar_targets.forEach(improvement => {
+        const previous = Number(cat.ratings[improvement].initial);
+        const validOffsets = SIMILAR_RATING_OFFSETS.filter(offset => previous + offset >= 0 && previous + offset <= 100);
+        const offset = shuffle(validOffsets)[0] ?? (previous < 100 ? 1 : -1);
+        cat.group_ratings[improvement] = previous + offset;
+        cat.group_feedback_by_improvement[improvement] = {
+          condition: cat.source_type === "neutral" ? "control_similar_group_rating" : "similar_group_rating",
+          offset_from_initial: offset
+        };
+      });
+
+      record({
+        trial_type: "group_ratings_generated",
+        category_key: cat.category_key,
+        source_type: cat.source_type,
+        lowest_exclusion_target_rating: minimumPrevious,
+        group_rating_gap_rule: gapRule,
+        exclusion_targets: cat.exclusion_targets.slice(),
+        positive_targets: cat.positive_targets.slice(),
+        similar_targets: cat.similar_targets.slice(),
+        positive_target_shortfall: Math.max(0, POSITIVE_TARGET_COUNT - cat.positive_targets.length),
+        group_ratings: Object.assign({}, cat.group_ratings),
+        group_feedback_by_improvement: Object.assign({}, cat.group_feedback_by_improvement)
+      });
+    }
+
+    function getGroupRating(cat, improvement) {
+      return cat.group_ratings[improvement] ?? null;
+    }
+
+    function getSourcePhrase(cat) {
+      const age = state.demographics.age ? `${h(state.demographics.age)}-летних ` : "";
+      if (cat.source_type === "teenagers") return `${age}подростков в России`;
+      if (cat.source_type === "adults") return "россиян со средним возрастом 45 лет";
+      if (cat.source_type === "neutral") return "других участников опроса";
+      return "";
+    }
+
+    function getSourceGroupLabel(cat) {
+      const age = state.demographics.age ? `${h(state.demographics.age)}-летние ` : "";
+      if (cat.source_type === "teenagers") return `${age}подростки в России`;
+      if (cat.source_type === "adults") return "Россияне со средним возрастом 45 лет";
+      if (cat.source_type === "neutral") return "Другие участники опроса";
+      return "";
+    }
+
+    function getSourceShort(cat) {
+      const age = state.demographics.age ? `${h(state.demographics.age)}-летних` : "подростков вашего возраста";
+      if (cat.source_type === "teenagers") return state.demographics.age ? `оценка ${age} подростков` : `оценка ${age}`;
+      if (cat.source_type === "adults") return "оценка россиян со средним возрастом 45 лет";
+      if (cat.source_type === "neutral") return "оценка других участников";
+      return "";
+    }
+
+    function markerLeft(value) {
+      const bounded = Math.max(0, Math.min(100, Number(value) || 0));
+      return `${bounded}%`;
+    }
+
+    function markerEdgeClass(value) {
+      const bounded = Math.max(0, Math.min(100, Number(value) || 0));
+      if (bounded <= 12) return "edge-left";
+      if (bounded >= 88) return "edge-right";
+      return "";
+    }
+
+    function showSourceIntro(index) {
+      const cat = catData(index);
+      setScreen("source_intro", { index });
+      const isNeutral = cat.source_type === "neutral";
+      const sentence = isNeutral
+        ? "Далее вы перейдёте к следующему этапу оценки предложений."
+        : `На следующем экране вы увидите предложения с самой низкой поддержкой по оценкам ${getSourcePhrase(cat)}.`;
+      setHTML(`
+        <section class="instruction-stage">
+          <div class="card instruction-card">
+            <div class="pill">${h(cat.category_title_ru)}</div>
+            <div class="instruction-sentence">${sentence}</div>
+            <div class="actions">${btn(isNeutral ? "Продолжить" : "Показать результаты", "continueToResults")}</div>
+          </div>
+        </section>
+      `);
+      document.getElementById("continueToResults").onclick = () => {
+        record({
+          trial_type: "source_intro",
+          category_key: cat.category_key,
+          source_type: cat.source_type,
+          source_label: cat.source_label,
+          instruction_text: sentence
+        });
+        if (isNeutral) {
+          showRating(index, 0, "confirm");
+        } else {
+          showGroupResultsScreen(index);
+        }
+      };
+    }
+
+    function showRating(index, rankIndex, phase) {
+      const cat = catData(index);
+      setScreen("rating", { index, rankIndex, phase });
+      const phaseImprovements = phase === "initial" ? cat.ranking : cat.confirmation_targets;
+      const improvement = phaseImprovements[rankIndex];
+      const rankPosition = cat.ranking.indexOf(improvement) + 1;
+      const rating = cat.ratings[improvement] || {};
+      const isConfirmationTarget = cat.confirmation_targets.includes(improvement);
+      const isManipulated = cat.source_type !== "neutral" && isConfirmationTarget;
+      const isExclusionTarget = cat.exclusion_targets.includes(improvement);
+      const isPositiveTarget = cat.positive_targets.includes(improvement);
+      const feedback = cat.group_feedback_by_improvement[improvement] || null;
+      const hasAssignedGroupRating = Object.prototype.hasOwnProperty.call(cat.group_ratings, improvement);
+      const previous = rating.initial;
+      const groupRating = phase === "confirm" && hasAssignedGroupRating ? getGroupRating(cat, improvement) : null;
+      const showGroup = groupRating != null;
+      const draftKey = `${phase}:${improvement}`;
+      const defaultStart = phase === "initial" ? 50 : previous;
+      const start = Object.prototype.hasOwnProperty.call(cat.rating_drafts, draftKey)
+        ? Number(cat.rating_drafts[draftKey])
+        : defaultStart;
+      const title = phase === "initial" ? "Оценка предложения" : "Пожалуйста, подтвердите вашу оценку";
+      const subtitle = phase === "initial"
+        ? "Укажите, насколько полезным для вас было бы это предложение."
+        : showGroup
+          ? "Ваша предыдущая оценка и средняя оценка группы отмечены на шкале. Вы можете оставить свой ответ прежним или изменить его."
+          : "Ваша предыдущая оценка отмечена на шкале. Вы можете оставить её прежней или изменить.";
+
+      const previousMarker = phase === "confirm" ? `<div class="marker ${markerEdgeClass(previous)}" style="left:${markerLeft(previous)}"><span class="marker-label">ваша предыдущая: ${previous}</span></div>` : "";
+      const groupMarker = showGroup ? `<div class="marker group ${isExclusionTarget ? "excluded" : ""} ${markerEdgeClass(groupRating)}" style="left:${markerLeft(groupRating)}"><span class="marker-label">${getSourceShort(cat)}: ${groupRating}</span></div>` : "";
+      const sourceNote = showGroup ? `
+        <div class="source-note ${isExclusionTarget ? "trigger" : "context"}">
+          <span class="source-kicker">Оценки: ${getSourceGroupLabel(cat)}</span>
+          По оценкам ${getSourcePhrase(cat)}, предложение <b>${h(improvement)}</b> получило среднюю оценку <b>${groupRating}/100</b>.
+          ${isExclusionTarget ? "Из-за низкой поддержки голос за это предложение не будет засчитан." : ""}
+        </div>
+      ` : "";
+
+      setHTML(`
+        <section class="card rating-card">
+          <div class="pill">${h(cat.category_title_ru)}</div>
+          <div class="rating-title">${title}</div>
+          <p>${subtitle}</p>
+          <div class="improvement-heading">
+            <div class="improvement-name">${h(improvement)}</div>
+          </div>
+          <p class="muted">Позиция в вашем рейтинге: ${rankPosition} из ${RANKING_SIZE}</p>
+          ${sourceNote}
+          <div class="slider-wrap ${showGroup ? "has-group" : ""}">
+            ${previousMarker}${groupMarker}
+            <input id="ratingSlider" type="range" min="0" max="100" step="1" value="${start}" />
+          </div>
+          <div class="scale-labels"><span>0 — совсем не полезно</span><span>100 — очень полезно</span></div>
+          <div class="value-line center">Текущая оценка: <b><span id="ratingValue">${start}</span>/100</b></div>
+          <div class="actions">${btn("Продолжить", "continueRating")}</div>
+        </section>
+      `);
+
+      const slider = document.getElementById("ratingSlider");
+      const value = document.getElementById("ratingValue");
+      slider.oninput = () => {
+        value.textContent = slider.value;
+        cat.rating_drafts[draftKey] = Number(slider.value);
+        markStateDirty(300);
+      };
+      slider.onchange = () => {
+        cat.rating_drafts[draftKey] = Number(slider.value);
+        record({
+          trial_type: "rating_slider_changed",
+          rating_phase: phase,
+          category_key: cat.category_key,
+          source_type: cat.source_type,
+          improvement,
+          rank_position: rankPosition,
+          rating_value: Number(slider.value)
+        });
+      };
+      document.getElementById("continueRating").onclick = () => {
+        const finalValue = Number(slider.value);
+        delete cat.rating_drafts[draftKey];
+        if (!cat.ratings[improvement]) cat.ratings[improvement] = {};
+        if (phase === "initial") {
+          cat.ratings[improvement].initial = finalValue;
+        } else {
+          cat.ratings[improvement].confirm = finalValue;
+          cat.ratings[improvement].change = finalValue - previous;
+          cat.ratings[improvement].group_rating = groupRating;
+          cat.ratings[improvement].was_group_marker_shown = showGroup ? 1 : 0;
+        }
+        record({
+          trial_type: "improvement_rating",
+          rating_phase: phase,
+          category_key: cat.category_key,
+          category_title: cat.category_title,
+          source_type: cat.source_type,
+          improvement,
+          rank_position: rankPosition,
+          improvement_relevance: relevanceFor(cat, improvement),
+          is_confirmation_target: isConfirmationTarget ? 1 : 0,
+          is_exclusion_target: isExclusionTarget ? 1 : 0,
+          is_positive_target: isPositiveTarget ? 1 : 0,
+          is_manipulated_position: isManipulated ? 1 : 0,
+          group_feedback_condition: feedback?.condition || (cat.source_type === "neutral" ? "neutral_confirmation" : ""),
+          assigned_group_rating_offset: feedback?.offset_from_initial ?? "",
+          rating_value: finalValue,
+          previous_rating: phase === "confirm" ? previous : "",
+          group_rating: groupRating == null ? "" : groupRating,
+          rating_change_from_previous: phase === "confirm" ? finalValue - previous : ""
+        });
+
+        if (rankIndex < phaseImprovements.length - 1) {
+          showRating(index, rankIndex + 1, phase);
+        } else if (phase === "initial") {
+          assignGroupRatings(cat);
+          showSourceIntro(index);
+        } else {
+          finishCategory(index);
+        }
+      };
+    }
+
+    function showGroupResultsScreen(index) {
+      const cat = catData(index);
+      if (cat.source_type === "neutral") {
+        showRating(index, 0, "confirm");
+        return;
+      }
+      setScreen("group_results", { index });
+      const lowSupportImprovements = cat.exclusion_targets.map(improvement => {
+        const position = cat.ranking.indexOf(improvement) + 1;
+        const group = getGroupRating(cat, improvement);
+        return { position, improvement, relevance: relevanceFor(cat, improvement), group_rating: group };
+      });
+      cat.low_support_improvements = lowSupportImprovements;
+      const cards = lowSupportImprovements.map(x => `
+        <div class="low-support-card">
+          ${h(x.improvement)}<br><span class="small">Позиция в вашем рейтинге: ${x.position} из ${RANKING_SIZE} · ${getSourceShort(cat)}: ${x.group_rating}/100</span>
+        </div>
+      `).join("");
+      setHTML(`
+        <section class="card narrow">
+          <div class="pill">${h(cat.category_title_ru)}</div>
+          <h2>Предварительные результаты опроса</h2>
+          <div class="source-banner">
+            Следующие предложения получили низкие оценки по результатам голосования <strong>${getSourcePhrase(cat)}</strong>. Голоса за них не будут засчитаны.
+          </div>
+          <div class="low-support-list">${cards}</div>
+          <p class="muted">Далее будет задан короткий вопрос о только что показанных результатах.</p>
+          <div class="actions">${btn("Продолжить", "goAttentionCheck")}</div>
+        </section>
+      `);
+      document.getElementById("goAttentionCheck").onclick = () => {
+        record({ trial_type: "group_results_screen", category_key: cat.category_key, source_type: cat.source_type, low_support_improvements: lowSupportImprovements });
+        showAttentionCheck(index);
+      };
+    }
+
+    function showAttentionCheck(index) {
+      const cat = catData(index);
+      setScreen("attention_check", { index });
+      const age = state.demographics.age ? `${state.demographics.age}-летние подростки в России` : "Подростки в России вашего возраста";
+      const correctOption = cat.source_type === "teenagers"
+        ? { value: "teenagers", label: age }
+        : { value: "adults", label: "Россияне со средним возрастом 45 лет" };
+      const options = shuffle([
+        correctOption,
+        { value: "teachers", label: "Учителя российских школ" },
+        { value: "university_students", label: "Студенты российских университетов" },
+        { value: "parents", label: "Родители подростков в России" }
+      ]);
+      const optionRows = options.map(option => `
+        <label class="attention-option" for="attention_${option.value}">
+          <input id="attention_${option.value}" type="radio" name="attention_source" value="${option.value}" ${cat.attention_draft === option.value ? "checked" : ""} />
+          <span>${h(option.label)}</span>
+        </label>
+      `).join("");
+
+      setHTML(`
+        <section class="card narrow">
+          <div class="pill">${h(cat.category_title_ru)}</div>
+          <h2>Короткий вопрос</h2>
+          <p><b>Какая группа, согласно только что показанным результатам, поставила этим предложениям низкие оценки?</b></p>
+          <div class="attention-options">${optionRows}</div>
+          <div id="attentionError" class="error">Пожалуйста, выберите один вариант.</div>
+          <div class="actions">${btn("Продолжить", "continueAttentionCheck")}</div>
+        </section>
+      `);
+
+      document.querySelectorAll('input[name="attention_source"]').forEach(input => {
+        input.addEventListener("change", () => {
+          cat.attention_draft = input.value;
+          record({
+            trial_type: "attention_option_changed",
+            category_key: cat.category_key,
+            source_type: cat.source_type,
+            selected_source_type: input.value
+          });
+        });
+      });
+
+      document.getElementById("continueAttentionCheck").onclick = () => {
+        const selected = document.querySelector('input[name="attention_source"]:checked');
+        if (!selected) {
+          document.getElementById("attentionError").style.display = "block";
+          return;
+        }
+        cat.attention_check = {
+          question_key: "low_support_group_source_recall",
+          selected_source_type: selected.value,
+          correct_source_type: cat.source_type,
+          correct: selected.value === cat.source_type ? 1 : 0
+        };
+        cat.attention_draft = selected.value;
+        record({
+          trial_type: "attention_check",
+          category_key: cat.category_key,
+          source_type: cat.source_type,
+          response: Object.assign({}, cat.attention_check)
+        });
+        showRating(index, 0, "confirm");
+      };
+    }
+
+    function finishCategory(index) {
+      const cat = catData(index);
+      record({ trial_type: "category_finished", category_key: cat.category_key, source_type: cat.source_type });
+      if (index < state.categories.length - 1) {
+        show2048Break(index, index + 1);
+      } else {
+        showFinal();
+      }
+    }
+
+    // -----------------------------------------------------
+    // 2048 break
+    // -----------------------------------------------------
+
+    let breakGame = null;
+    let breakTimer = null;
+    let breakActive = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    function show2048Break(previousIndex, nextIndex) {
+      breakActive = true;
+      breakGame = createGameState();
+      setScreen("break_2048", { previousIndex, nextIndex });
+      setHTML(`
+        <section class="card wide">
+          <h2>Перерыв 30 секунд</h2>
+          <p>Можно немного отвлечься. Играйте в мини-версию 2048, пока идёт таймер. Через 30 секунд следующая категория откроется автоматически.</p>
+          <div class="break-layout">
+            <div class="game-wrap" id="gameWrap">
+              <div class="game-top"><div class="timer">Осталось: <span id="breakSeconds">30</span> сек.</div><div class="score">Очки: <span id="scoreValue">0</span></div></div>
+              <div id="gameGrid" class="game-grid" aria-label="2048 grid"></div>
+              <div class="game-controls">
+                <button class="up" id="moveUp">↑</button>
+                <button class="left" id="moveLeft">←</button>
+                <button class="down" id="moveDown">↓</button>
+                <button class="right" id="moveRight">→</button>
+              </div>
+            </div>
+            <div>
+              <h3>Как играть</h3>
+              <p>Используйте стрелки на клавиатуре, свайпы по полю или кнопки под полем. Одинаковые числа соединяются.</p>
+              <p class="muted">Это просто короткая пауза между категориями. Результат игры не влияет на исследование.</p>
+              <p class="muted center"><strong>Следующая категория откроется автоматически.</strong></p>
+            </div>
+          </div>
+        </section>
+      `);
+      renderGame();
+
+      const bindMove = (id, dir) => document.getElementById(id).onclick = () => moveGame(dir);
+      bindMove("moveUp", "up");
+      bindMove("moveLeft", "left");
+      bindMove("moveDown", "down");
+      bindMove("moveRight", "right");
+
+      const wrap = document.getElementById("gameWrap");
+      wrap.addEventListener("touchstart", e => {
+        const t = e.changedTouches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+      }, { passive: true });
+      wrap.addEventListener("touchend", e => {
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 25) return;
+        if (Math.abs(dx) > Math.abs(dy)) moveGame(dx > 0 ? "right" : "left");
+        else moveGame(dy > 0 ? "down" : "up");
+      }, { passive: true });
+
+      let seconds = 30;
+      breakTimer = setInterval(() => {
+        seconds -= 1;
+        const secondsEl = document.getElementById("breakSeconds");
+        if (secondsEl) secondsEl.textContent = seconds;
+        if (seconds <= 0) {
+          clearInterval(breakTimer);
+          breakTimer = null;
+          breakActive = false;
+          record({ trial_type: "break_2048_completed", after_category_index: previousIndex, score: breakGame.score });
+          showCategoryIntro(nextIndex);
+        }
+      }, 1000);
+    }
+
+    document.addEventListener("keydown", e => {
+      if (!breakActive || !breakGame) return;
+      const map = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+      if (map[e.key]) {
+        e.preventDefault();
+        moveGame(map[e.key]);
+      }
+    });
+
+    function createGameState() {
+      const game = { grid: Array(16).fill(0), score: 0 };
+      addTile(game);
+      addTile(game);
+      return game;
+    }
+
+    function addTile(game) {
+      const empty = game.grid.map((v, i) => v === 0 ? i : -1).filter(i => i >= 0);
+      if (!empty.length) return;
+      const idx = empty[Math.floor(Math.random() * empty.length)];
+      game.grid[idx] = Math.random() < 0.9 ? 2 : 4;
+    }
+
+    function renderGame() {
+      const grid = document.getElementById("gameGrid");
+      if (!grid) return;
+      grid.innerHTML = breakGame.grid.map(v => `<div class="tile ${v ? "v" + v : ""}">${v || ""}</div>`).join("");
+      document.getElementById("scoreValue").textContent = breakGame.score;
+    }
+
+    function moveGame(dir) {
+      const before = breakGame.grid.join(",");
+      let rows = [];
+      for (let r = 0; r < 4; r++) rows.push(breakGame.grid.slice(r * 4, r * 4 + 4));
+
+      function col(c) { return [breakGame.grid[c], breakGame.grid[c + 4], breakGame.grid[c + 8], breakGame.grid[c + 12]]; }
+      function setCol(c, values) { for (let r = 0; r < 4; r++) breakGame.grid[c + r * 4] = values[r]; }
+      function mergeLine(line) {
+        const nums = line.filter(Boolean);
+        const merged = [];
+        for (let i = 0; i < nums.length; i++) {
+          if (nums[i] === nums[i + 1]) {
+            const value = nums[i] * 2;
+            merged.push(value);
+            breakGame.score += value;
+            i++;
+          } else {
+            merged.push(nums[i]);
+          }
+        }
+        while (merged.length < 4) merged.push(0);
+        return merged;
+      }
+
+      if (dir === "left" || dir === "right") {
+        for (let r = 0; r < 4; r++) {
+          let line = breakGame.grid.slice(r * 4, r * 4 + 4);
+          if (dir === "right") line.reverse();
+          line = mergeLine(line);
+          if (dir === "right") line.reverse();
+          for (let c = 0; c < 4; c++) breakGame.grid[r * 4 + c] = line[c];
+        }
+      } else {
+        for (let c = 0; c < 4; c++) {
+          let line = col(c);
+          if (dir === "down") line.reverse();
+          line = mergeLine(line);
+          if (dir === "down") line.reverse();
+          setCol(c, line);
+        }
+      }
+
+      if (before !== breakGame.grid.join(",")) {
+        addTile(breakGame);
+        renderGame();
+      }
+    }
+
+    // -----------------------------------------------------
+    // Final data export
+    // -----------------------------------------------------
+
+    function makeTrialRows() {
+      const rows = [];
+      state.categories.forEach(cat => {
+        cat.ranking.forEach((improvement, idx) => {
+          const r = cat.ratings[improvement] || {};
+          rows.push({
+            participant_id: state.participant_id,
+            age: state.demographics.age || "",
+            gender: state.demographics.gender || "",
+            class_or_course: state.demographics.class_or_course || "",
+            city: state.demographics.city || "",
+            bpns_autonomy_satisfaction_mean: state.bpns_autonomy_satisfaction.mean || "",
+            category_key: cat.category_key,
+            category_title: cat.category_title,
+            source_type: cat.source_type,
+            source_label: cat.source_label,
+            rank_position: idx + 1,
+            improvement,
+            improvement_pool_reviewed_at: state.improvement_pool_reviewed_at,
+            presented_improvement_count: cat.preset_improvements.length + (cat.custom_improvement ? 1 : 0),
+            category_unranked_improvements: cat.pool.join(" | "),
+            improvement_relevance: relevanceFor(cat, improvement),
+            is_custom_improvement: cat.custom_improvement === improvement ? 1 : 0,
+            is_confirmation_target: cat.confirmation_targets.includes(improvement) ? 1 : 0,
+            confirmation_target_rule: cat.confirmation_target_rule,
+            is_exclusion_target: cat.exclusion_targets.includes(improvement) ? 1 : 0,
+            exclusion_target_rule: cat.exclusion_target_rule,
+            vote_counted: cat.exclusion_targets.includes(improvement) ? 0 : 1,
+            is_positive_target: cat.positive_targets.includes(improvement) ? 1 : 0,
+            is_similar_target: cat.similar_targets.includes(improvement) ? 1 : 0,
+            is_manipulated_position: cat.source_type !== "neutral" && cat.confirmation_targets.includes(improvement) ? 1 : 0,
+            group_feedback_condition: cat.group_feedback_by_improvement[improvement]?.condition || (cat.source_type === "neutral" ? "neutral_confirmation" : ""),
+            assigned_group_rating_offset: cat.group_feedback_by_improvement[improvement]?.offset_from_initial ?? "",
+            attention_check_selected_source: cat.attention_check?.selected_source_type || "",
+            attention_check_correct_source: cat.attention_check?.correct_source_type || "",
+            attention_check_correct: cat.attention_check?.correct ?? "",
+            initial_rating: r.initial ?? "",
+            confirm_rating: r.confirm ?? "",
+            assigned_group_rating: cat.group_ratings[improvement] ?? "",
+            group_rating: r.group_rating ?? "",
+            was_group_marker_shown: r.was_group_marker_shown ?? 0,
+            rating_change: r.change ?? ""
+          });
+        });
+      });
+      return rows;
+    }
+
+    function toCSV(rows) {
+      const headers = Object.keys(rows[0] || {empty: ""});
+      const esc = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+      return headers.join(",") + "\n" + rows.map(row => headers.map(h => esc(row[h])).join(",")).join("\n");
+    }
+
+    function download(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function showFinal() {
+      const firstCompletion = !state.completed;
+      if (firstCompletion) {
+        state.completed = true;
+        state.finished_at_iso = new Date().toISOString();
+        state.finished_at_local = new Date().toLocaleString();
+      }
+      setScreen("final");
+      if (firstCompletion) record({ trial_type: "survey_finished" });
+      setHTML(`
+        <section class="card narrow">
+          <h2>Спасибо за участие!</h2>
+          <p>Опрос завершён.</p>
+          <div id="finalSaveStatus" class="warning">Ответы сохраняются…</div>
+          <p><b>ID участника:</b> ${h(state.participant_id)}</p>
+          <p class="muted">Если соединение временно прервётся, локальная резервная копия останется на этом устройстве и отправка повторится автоматически.</p>
+        </section>
+      `);
+      scheduleSync(0);
+    }
+
+    function resumeCurrentScreen() {
+      const screen = state.current_screen || "intro";
+      const context = state.current_context || {};
+      const index = Number.isInteger(Number(context.index)) ? Number(context.index) : 0;
+      const safeIndex = index >= 0 && index < state.categories.length ? index : 0;
+
+      switch (screen) {
+        case "demographics": showDemographics(); break;
+        case "bpns": showBPNS(); break;
+        case "survey_instruction": showSurveyIntro(Number(context.step) || 0); break;
+        case "category_intro": showCategoryIntro(safeIndex); break;
+        case "ranking": showRanking(safeIndex, null); break;
+        case "ranking_confirm": showRankingConfirm(safeIndex); break;
+        case "initial_rating_intro": showInitialRatingIntro(safeIndex); break;
+        case "rating": {
+          const phase = context.phase === "confirm" ? "confirm" : "initial";
+          const rankIndex = Math.max(0, Number(context.rankIndex) || 0);
+          showRating(safeIndex, rankIndex, phase);
+          break;
+        }
+        case "source_intro": showSourceIntro(safeIndex); break;
+        case "group_results": showGroupResultsScreen(safeIndex); break;
+        case "attention_check": showAttentionCheck(safeIndex); break;
+        case "break_2048": {
+          const previousIndex = Math.max(0, Number(context.previousIndex) || 0);
+          const nextIndex = Math.min(state.categories.length - 1, Math.max(0, Number(context.nextIndex) || 1));
+          show2048Break(previousIndex, nextIndex);
+          break;
+        }
+        case "final": showFinal(); break;
+        default: showIntro();
+      }
+    }
+
+    if (state.completed) {
+      showFinal();
+    } else if (restoredSession) {
+      const previousScreen = state.current_screen || "intro";
+      record({ trial_type: "survey_resumed", previous_screen: previousScreen });
+      resumeCurrentScreen();
+    } else {
+      showIntro();
+      record({ trial_type: "survey_opened" });
+    }
+  </script>
+</body>
+</html>
