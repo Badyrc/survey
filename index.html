@@ -40,6 +40,12 @@
     .reference-marker.group{color:var(--blue2)}.reference-marker.group.low{color:#a91f2b}.reference-marker.group.low .reference-badge{background:#ffe2e5}.reference-marker.group.high{color:#0f6d49}.reference-marker.group.high .reference-badge{background:var(--greensoft)}
     .slider.with-markers .anchors{grid-column:2;padding-inline:0}
     @media(max-width:680px){.slider.with-markers{grid-template-columns:52px minmax(0,1fr);gap:6px 9px}}
+    @media(max-width:680px){
+      .card.wide{padding-inline:8px}
+      .rating{padding-inline:8px}
+      .slider,.slider.with-markers{grid-template-columns:42px minmax(0,1fr);gap:6px 4px}
+      .slider output{width:40px}
+    }
   </style>
 </head>
 <body>
@@ -47,7 +53,7 @@
 <script>
 (() => {
   "use strict";
-  const VERSION="teen_program_vote_v25_html", KEY=VERSION+"_backup";
+  const VERSION="teen_program_vote_v26_html", KEY=VERSION+"_backup";
   const RECEIVER="https://functions.yandexcloud.net/d4emijparrc706coq789";
   const ADULT_SOURCE="Россияне со средним возрастом 49 лет";
   const sourceDetails=(source,age)=>{
@@ -95,10 +101,13 @@
       <label class="field"><span>Пол</span><select data-demo="gender"><option value="">Выберите</option><option value="Мужской" ${state.demographics.gender==="Мужской"?"selected":""}>Мужской</option><option value="Женский" ${state.demographics.gender==="Женский"?"selected":""}>Женский</option></select></label>
       <label class="field"><span>Класс / курс</span><input data-demo="classOrCourse" type="text" value="${esc(state.demographics.classOrCourse)}"></label>
       <label class="field"><span>Город</span><input data-demo="city" type="text" value="${esc(state.demographics.city)}"></label>
-      <label class="field"><span>Я живу…</span><select data-demo="livingArrangement"><option value="">Выберите</option><option value="alone" ${state.demographics.livingArrangement==="alone"?"selected":""}>Один / одна</option><option value="with_parents" ${state.demographics.livingArrangement==="with_parents"?"selected":""}>С родителями или опекунами</option>${isAdult?`<option value="with_partner" ${state.demographics.livingArrangement==="with_partner"?"selected":""}>С партнёром / партнёршей</option>`:""}</select></label>
-      ${isAdult?`<label class="field"><span>Состоите ли вы сейчас в романтических отношениях?</span><select data-demo="relationshipStatus"><option value="">Выберите</option><option value="yes" ${state.demographics.relationshipStatus==="yes"?"selected":""}>Да</option><option value="no" ${state.demographics.relationshipStatus==="no"?"selected":""}>Нет</option><option value="prefer_not_to_answer" ${state.demographics.relationshipStatus==="prefer_not_to_answer"?"selected":""}>Предпочитаю не отвечать</option></select></label>`:""}
+      ${!isAdult?`<label class="field"><span>Я живу…</span><select data-demo="livingArrangement"><option value="">Выберите</option><option value="alone" ${state.demographics.livingArrangement==="alone"?"selected":""}>Один / одна</option><option value="with_parents" ${state.demographics.livingArrangement==="with_parents"?"selected":""}>С родителями или опекунами</option></select></label>`:""}
     </div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","continue-demo")}</section>`;
     }
+    if(state.screen==="adult_demographics")html=`<section class="card compact"><h1>Ещё два вопроса</h1><div class="grid2">
+      <label class="field"><span>Я живу…</span><select data-demo="livingArrangement"><option value="">Выберите</option><option value="alone" ${state.demographics.livingArrangement==="alone"?"selected":""}>Один / одна</option><option value="with_parents" ${state.demographics.livingArrangement==="with_parents"?"selected":""}>С родителями или опекунами</option><option value="with_partner" ${state.demographics.livingArrangement==="with_partner"?"selected":""}>С партнёром / партнёршей</option></select></label>
+      <label class="field"><span>Состоите ли вы сейчас в романтических отношениях?</span><select data-demo="relationshipStatus"><option value="">Выберите</option><option value="yes" ${state.demographics.relationshipStatus==="yes"?"selected":""}>Да</option><option value="no" ${state.demographics.relationshipStatus==="no"?"selected":""}>Нет</option><option value="prefer_not_to_answer" ${state.demographics.relationshipStatus==="prefer_not_to_answer"?"selected":""}>Предпочитаю не отвечать</option></select></label>
+    </div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","continue-adult-demo")}</section>`;
     if(state.screen==="bpns")html=`<section class="card wide"><div class="likert-list">${autonomy.map((x,i)=>`<fieldset class="likert"><legend>${x[0]}. ${x[1]}</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.autonomyResponses[i]===v?"selected":""}"><input type="radio" name="a${i}" data-auto="${i}" value="${v}" ${state.autonomyResponses[i]===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset>`).join("")}<fieldset class="likert"><legend>8. Насколько умелым(ой) вы себя считаете?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.initialSkillSelfRating===v?"selected":""}"><input type="radio" name="initial-skill" data-initial-skill value="${v}" ${state.initialSkillSelfRating===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем не умелым(ой)</span><span>Очень умелым(ой)</span></div></fieldset></div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","continue-bpns")}</section>`;
     if(state.screen==="instruction")html=`<section class="instruction"><div class="instruction-copy">В каждой категории выберите 3 идеи, которые Вы считаете наиболее важными.</div>${button("Начать","start")}</section>`;
     if(state.screen==="selection")html=`<section class="card wide">${progress(state.categoryIndex,"vote")}<h1>${c.title}</h1><div class="selection-head"><p>Выберите 3 идеи</p><strong>${c.selected.length} / 3</strong></div>${c.selected.length?`<div class="selected-strip">${c.selected.map((x,i)=>`<span><b class="badge">${i+1}</b>${x}</span>`).join("")}</div>`:""}<div class="ideas">${c.optionOrder.map(x=>{const pos=c.selected.indexOf(x)+1,sel=pos>0;return`<button class="idea ${sel?"selected":""}" data-idea="${esc(x)}" ${c.selected.length===3&&!sel?"disabled":""}><b class="badge">${sel?pos:""}</b><span>${x}</span></button>`}).join("")}</div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","confirm-select",c.selected.length!==3)}</section>`;
@@ -107,7 +116,7 @@
     if(state.screen==="feedback_intro")html=`<section class="instruction"><div class="instruction-copy">Теперь вы увидите, как другие участники оценили выбранные вами предложения.</div>${button("Продолжить","feedback-start")}</section>`;
     if(state.screen==="group_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy group-copy"><span>Вы увидите, как проголосовали</span><strong>${sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age).introLabel}.</strong><span>Предложения с низкой оценкой будут выделены красным и, скорее всего, исключены.</span></div>${button("Продолжить","group-continue")}</section>`;
     if(state.screen==="attention")html=`<section class="card compact"><span class="eyebrow">${f.title}</span><h1>Короткий вопрос</h1><p class="attention-q">Чьи оценки вы сейчас увидите?</p><div class="attention-options">${f.attentionOrder.map(v=>{const lab=v==="teenagers_same_age"?sourceDetails(v,state.demographics.age).label:attention.find(x=>x[0]===v)[1];return`<label class="${f.attentionResponse===v?"selected":""}"><input type="radio" name="attention" value="${v}" ${f.attentionResponse===v?"checked":""}><span>${lab}</span></label>`}).join("")}</div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","submit-attention")}</section>`;
-    if(state.screen==="rerating_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy">Подтвердите свои оценки. Вы можете оставить их прежними или изменить.${button("Продолжить","rerating-start")}</section>`;
+    if(state.screen==="rerating_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy">Подтвердите свои оценки. Вы можете оставить их прежними или изменить./div>${button("Продолжить","rerating-start")}</section>`;
     if(state.screen==="rerating")html=`<section class="card wide">${progress(state.feedbackIndex,"review")}<h1>${f.title}</h1><div class="rating-list">${f.selected.map((x,i)=>rating(x,i,f.reratings[x]??f.initialRatings[x],"rerating",f)).join("")}</div>${button("Продолжить","submit-rerating")}</section>`;
     if(state.screen==="memory_intro")html=`<section class="instruction"><span class="eyebrow">Задание на память</span><div class="instruction-copy">Пожалуйста, запомните следующую последовательность цифр.</div>${button("Начать","memory-start")}</section>`;
     if(state.screen==="memory"){html=`<section class="memory"><span class="eyebrow">Задание на память</span><h1>Запоминайте последовательность цифр</h1><div class="memory-number" id="memory-number"></div><div class="timer" id="timer">30 сек.</div><div class="memory-progress"><span id="memory-bar"></span></div></section>`}
@@ -151,12 +160,25 @@
     const on=(id,fn)=>{const x=document.getElementById(id);if(x)x.onclick=fn};
     on("continue-demo",()=>{
       const a=+state.demographics.age,isAdult=a>=18;
-      if(!isAdult){
-        state.demographics.relationshipStatus="not_asked_under_18";
-        if(state.demographics.livingArrangement==="with_partner")state.demographics.livingArrangement="";
+      if(!Number.isInteger(a)||a<14||a>18||!state.demographics.gender||(!isAdult&&!state.demographics.livingArrangement)){
+        error=isAdult?"Укажите возраст от 14 до 18 лет и выберите пол.":"Укажите возраст от 14 до 18 лет, пол и с кем вы живёте.";
+        render();
+        return;
       }
-      if(!Number.isInteger(a)||a<14||a>18||!state.demographics.gender||!state.demographics.livingArrangement||(isAdult&&!state.demographics.relationshipStatus)){
-        error=isAdult?"Укажите возраст от 14 до 18 лет и ответьте на все вопросы анкеты.":"Укажите возраст от 14 до 18 лет, пол и с кем вы живёте.";
+      if(isAdult){
+        if(state.demographics.relationshipStatus==="not_asked_under_18")state.demographics.relationshipStatus="";
+        go("adult_demographics","basic_demographics_submitted",{age:state.demographics.age,gender:state.demographics.gender,classOrCourse:state.demographics.classOrCourse,city:state.demographics.city});
+        return;
+      }
+      state.demographics.relationshipStatus="not_asked_under_18";
+      if(state.demographics.livingArrangement==="with_partner")state.demographics.livingArrangement="";
+      state.categories.forEach(c=>c.comparisonSourceAge=c.comparisonSource==="adults_49"?49:a);
+      go("bpns","demographics_submitted",{...state.demographics});
+    });
+    on("continue-adult-demo",()=>{
+      const a=+state.demographics.age;
+      if(!state.demographics.livingArrangement||!state.demographics.relationshipStatus){
+        error="Ответьте на оба вопроса.";
         render();
         return;
       }
