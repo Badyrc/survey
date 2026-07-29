@@ -60,7 +60,7 @@
 <script>
 (() => {
   "use strict";
-  const VERSION="teen_program_vote_v38_html", KEY=VERSION+"_backup_slider_start_zero";
+  const VERSION="teen_program_vote_v41_html", KEY=VERSION+"_backup_optional_high_target";
   const RECEIVER="https://functions.yandexcloud.net/d4emijparrc706coq789";
   const GROUP_19_SOURCE="19-летние участники";
   const GROUP_49_SOURCE="49-летние участники";
@@ -86,7 +86,7 @@
     const firstSource=Math.random()<.5?"adults_49":"teenagers_same_age";
     const sourceOrder=[firstSource,firstSource==="adults_49"?"teenagers_same_age":"adults_49"];
     const now=new Date().toISOString();
-    return{version:VERSION,participantId:`P${Date.now()}_${ri(10000,99999)}`,startedAtIso:now,updatedAtIso:now,completed:false,screen:"demographics",categoryIndex:0,feedbackIndex:0,demographics:{age:"",gender:"",classOrCourse:"",city:"",livingArrangement:"",relationshipStatus:""},autonomyResponses:Array(7).fill(null),initialSkillSelfRating:null,initialSelfLiking:null,finalAbilitySelfRating:null,finalSelfSatisfaction:null,nationalIdentityImportance:null,teenVoteReaction:null,adultVoteReaction:null,studyPurposeGuess:"",combinedAttentionResponse:"",combinedAttentionCorrect:null,categories:categories.map((c,i)=>({key:c.key,title:c.title,optionOrder:shuffle(c.ideas),selected:[],initialRatings:{},reratings:{},groupRatings:{},comparisonSource:sourceOrder[i],comparisonSourceAge:sourceOrder[i]==="adults_49"?49:19,lowPosition:lowPositions[i],lowDelta:null,highDelta:null,attentionOrder:shuffle(attention.map(x=>x[0])),attentionResponse:"",attentionCorrect:null})),memorySequence:[],memoryStartedAt:null,eventSeq:0,events:[]}
+    return{version:VERSION,participantId:`P${Date.now()}_${ri(10000,99999)}`,startedAtIso:now,updatedAtIso:now,completed:false,screen:"demographics",categoryIndex:0,feedbackIndex:0,demographics:{age:"",gender:"",classOrCourse:"",city:"",livingArrangement:"",relationshipStatus:""},autonomyResponses:Array(7).fill(null),initialSkillSelfRating:null,initialSelfLiking:null,finalAbilitySelfRating:null,finalSelfSatisfaction:null,nationalIdentityImportance:null,teenVoteReaction:null,adultVoteReaction:null,studyPurposeGuess:"",combinedAttentionResponse:"",combinedAttentionCorrect:null,categories:categories.map((c,i)=>({key:c.key,title:c.title,optionOrder:shuffle(c.ideas),selected:[],initialRatings:{},reratings:{},groupRatings:{},comparisonSource:sourceOrder[i],comparisonSourceAge:sourceOrder[i]==="adults_49"?49:19,lowPosition:lowPositions[i],controlPosition:null,highPosition:null,feedbackItems:[],omittedItems:[],lowThresholdMet:null,lowSelectionRule:"",lowDelta:null,controlDelta:null,highDelta:null,highTargetIncluded:null,highSelectionRule:"",attentionOrder:shuffle(attention.map(x=>x[0])),attentionResponse:"",attentionCorrect:null})),memorySequence:[],memoryStartedAt:null,eventSeq:0,events:[]}
   };
   let state;try{state=JSON.parse(localStorage.getItem(KEY))||fresh();if(state.version!==VERSION)state=fresh()}catch(e){state=fresh()}
   let error="",saveTimer,memoryTimer;
@@ -96,7 +96,86 @@
   const button=(text,id,disabled=false)=>`<button class="primary" id="${id}" ${disabled?"disabled":""}>${text}</button>`;
   const shell=body=>body;
   const progress=(i,phase)=>`<div class="progress"><span>${phase==="vote"?"Ваш выбор":phase==="exposure"?"Оценки участников":"Оценка идей"}</span><b>${i+1} / 2</b></div>`;
-  function groupRatings(c){const low=c.selected[c.lowPosition],stable=c.selected[c.lowPosition?0:1],third=c.selected[2],lowRating=ri(20,30),stableDelta=ri(1,10)*(Math.random()<.5?-1:1),highDelta=ri(20,30);c.lowDelta=lowRating-c.initialRatings[low];c.groupRatings={[low]:lowRating,[stable]:clamp(c.initialRatings[stable]+stableDelta),[third]:clamp(c.initialRatings[third]+highDelta)};c.highDelta=c.groupRatings[third]-c.initialRatings[third]}
+  const shownItems=c=>Array.isArray(c.feedbackItems)&&c.feedbackItems.length?c.feedbackItems:c.selected;
+  function groupRatings(c){
+    const rated=c.selected.map((item,index)=>({item,index,rating:c.initialRatings[item]}));
+    const eligible=rated.filter(x=>x.rating>=70);
+
+    let lowCandidates;
+    if(eligible.length){
+      const lowestEligible=Math.min(...eligible.map(x=>x.rating));
+      lowCandidates=eligible.filter(x=>x.rating===lowestEligible);
+      c.lowThresholdMet=true;
+      c.lowSelectionRule="lowest_rating_at_least_70";
+    }else{
+      const highestOverall=Math.max(...rated.map(x=>x.rating));
+      lowCandidates=rated.filter(x=>x.rating===highestOverall);
+      c.lowThresholdMet=false;
+      c.lowSelectionRule="fallback_highest_rating_no_item_at_least_70";
+    }
+
+    const lowChoice=lowCandidates[ri(0,lowCandidates.length-1)];
+    c.lowPosition=lowChoice.index;
+
+    const remaining=rated.filter(x=>x.index!==c.lowPosition);
+
+    // A positive target is only usable when there is room for a genuine
+    // increase of at least 20 points without hitting the 97-point cap.
+    const highEligible=remaining.filter(x=>97-x.rating>=20);
+    let highChoice=null;
+    if(highEligible.length){
+      const highestEligible=Math.max(...highEligible.map(x=>x.rating));
+      const highCandidates=highEligible.filter(x=>x.rating===highestEligible);
+      highChoice=highCandidates[ri(0,highCandidates.length-1)];
+      c.highPosition=highChoice.index;
+      c.highTargetIncluded=true;
+      c.highSelectionRule="highest_remaining_with_at_least_20_points_upward_room";
+    }else{
+      c.highPosition=null;
+      c.highTargetIncluded=false;
+      c.highSelectionRule="omitted_no_room_for_minimum_20_point_increase";
+    }
+
+    const stableCandidates=remaining.filter(x=>!highChoice||x.index!==highChoice.index);
+    const lowestStableRating=Math.min(...stableCandidates.map(x=>x.rating));
+    const stableTies=stableCandidates.filter(x=>x.rating===lowestStableRating);
+    const stableChoice=stableTies[ri(0,stableTies.length-1)];
+    c.controlPosition=stableChoice.index;
+
+    const low=lowChoice.item;
+    const stable=stableChoice.item;
+    const lowRating=ri(20,30);
+
+    // Keep the control discrepancy between 1 and 5 actual points.
+    const stableRating=c.initialRatings[stable];
+    const stableDirections=[];
+    if(stableRating>0)stableDirections.push(-1);
+    if(stableRating<97)stableDirections.push(1);
+    const stableSign=stableDirections[ri(0,stableDirections.length-1)];
+    const stableRoom=stableSign>0?97-stableRating:stableRating;
+    const stableDelta=stableSign*ri(1,Math.min(5,stableRoom));
+
+    c.lowDelta=lowRating-c.initialRatings[low];
+    c.controlDelta=stableDelta;
+    c.groupRatings={
+      [low]:lowRating,
+      [stable]:stableRating+stableDelta
+    };
+
+    if(highChoice){
+      const high=highChoice.item;
+      const maxHighDelta=Math.min(30,97-c.initialRatings[high]);
+      const highDelta=ri(20,maxHighDelta);
+      c.groupRatings[high]=c.initialRatings[high]+highDelta;
+      c.highDelta=highDelta;
+    }else{
+      c.highDelta=null;
+    }
+
+    const included=new Set([low,stable,...(highChoice?[highChoice.item]:[])]);
+    c.feedbackItems=c.selected.filter(item=>included.has(item));
+    c.omittedItems=c.selected.filter(item=>!included.has(item));
+  }
   function render(){
     clearInterval(memoryTimer);const app=document.getElementById("app"),c=state.categories[state.categoryIndex],f=state.categories[state.feedbackIndex];let html="";
     if(state.screen==="demographics"){
@@ -118,16 +197,16 @@
     if(state.screen==="initial_rating")html=`<section class="card wide">${progress(state.categoryIndex,"vote")}<h1>${c.title}</h1><p class="lead">Оцените все три предложения.</p><div class="rating-list">${c.selected.map((x,i)=>rating(x,i,hasOwn(c.initialRatings,x)?c.initialRatings[x]:0,"initial",null,"usefulness",hasOwn(c.initialRatings,x))).join("")}</div>${button("Продолжить","submit-initial",!c.selected.every(x=>hasOwn(c.initialRatings,x)))}</section>`;
     if(state.screen==="group_exposure"){
       const source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age);
-      html=`<section class="card wide">${progress(state.feedbackIndex,"exposure")}<h1>${f.title}</h1><p class="group-age-note">Большинство (средний возраст — ${source.age} лет)</p><div class="rating-list">${f.selected.map((x,i)=>exposureRating(x,i,f)).join("")}</div>${button("Продолжить","continue-exposure")}</section>`;
+      html=`<section class="card wide">${progress(state.feedbackIndex,"exposure")}<h1>${f.title}</h1><p class="group-age-note">Большинство (средний возраст — ${source.age} лет)</p><div class="rating-list">${shownItems(f).map(x=>exposureRating(x,f.selected.indexOf(x),f)).join("")}</div>${button("Продолжить","continue-exposure")}</section>`;
     }
     if(state.screen==="second_rating_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy">Пожалуйста, оцените, насколько вам нравятся эти идеи.</div>${button("Начать","start-second-rating")}</section>`;
-    if(state.screen==="second_rating")html=`<section class="card wide">${progress(state.feedbackIndex,"second")}<h1>${f.title}</h1><p class="lead">Насколько вам нравятся эти идеи?</p><div class="rating-list">${f.selected.map((x,i)=>rating(x,i,hasOwn(f.reratings,x)?f.reratings[x]:0,"rerating",null,"liking",hasOwn(f.reratings,x))).join("")}</div>${button("Продолжить","submit-rerating",!f.selected.every(x=>hasOwn(f.reratings,x)))}</section>`;
+    if(state.screen==="second_rating")html=`<section class="card wide">${progress(state.feedbackIndex,"second")}<h1>${f.title}</h1><p class="lead">Насколько вам нравятся эти идеи?</p><div class="rating-list">${shownItems(f).map(x=>rating(x,f.selected.indexOf(x),hasOwn(f.reratings,x)?f.reratings[x]:0,"rerating",null,"liking",hasOwn(f.reratings,x))).join("")}</div>${button("Продолжить","submit-rerating",!shownItems(f).every(x=>hasOwn(f.reratings,x)))}</section>`;
     if(state.screen==="memory_intro")html=`<section class="instruction"><span class="eyebrow">Задание на память</span><div class="instruction-copy">Пожалуйста, запомните следующую последовательность цифр.</div>${button("Начать","memory-start")}</section>`;
     if(state.screen==="memory"){html=`<section class="memory"><span class="eyebrow">Задание на память</span><h1>Запоминайте последовательность цифр</h1><div class="memory-number" id="memory-number"></div><div class="timer" id="timer">30 сек.</div><div class="memory-progress"><span id="memory-bar"></span></div></section>`}
-    if(state.screen==="final_questions")html=`<section class="card wide"><h1>Последние вопросы</h1><p class="lead">Пожалуйста, ответьте на все обязательные вопросы.</p><div class="likert-list"><fieldset class="likert"><legend>1. В целом, я доволен(на) собой.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.finalSelfSatisfaction===v?"selected":""}"><input type="radio" name="final-self-satisfaction" data-final-self-satisfaction value="${v}" ${state.finalSelfSatisfaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>2. Принадлежность к россиянам — важная часть моего представления о себе.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.nationalIdentityImportance===v?"selected":""}"><input type="radio" name="national-identity" data-final-answer="nationalIdentityImportance" value="${v}" ${state.nationalIdentityImportance===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>3. Какую реакцию у вас вызвало то, как проголосовали участники-подростки?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.teenVoteReaction===v?"selected":""}"><input type="radio" name="group-19-vote-reaction" data-final-answer="teenVoteReaction" value="${v}" ${state.teenVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><fieldset class="likert"><legend>4. Какую реакцию у вас вызвало то, как проголосовали взрослые участники?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.adultVoteReaction===v?"selected":""}"><input type="radio" name="group-49-vote-reaction" data-final-answer="adultVoteReaction" value="${v}" ${state.adultVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><fieldset class="likert"><legend>5. Участники какого возраста голосовали?</legend><div class="attention-options">${[
+    if(state.screen==="final_questions")html=`<section class="card wide"><h1>Последние вопросы</h1><p class="lead">Пожалуйста, ответьте на все обязательные вопросы.</p><div class="likert-list"><fieldset class="likert"><legend>1. В целом, я доволен(на) собой.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.finalSelfSatisfaction===v?"selected":""}"><input type="radio" name="final-self-satisfaction" data-final-self-satisfaction value="${v}" ${state.finalSelfSatisfaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>2. Принадлежность к россиянам — важная часть моего представления о себе.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.nationalIdentityImportance===v?"selected":""}"><input type="radio" name="national-identity" data-final-answer="nationalIdentityImportance" value="${v}" ${state.nationalIdentityImportance===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>3. Какую реакцию у вас вызвало то, как проголосовали 19-летние участники?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.teenVoteReaction===v?"selected":""}"><input type="radio" name="group-19-vote-reaction" data-final-answer="teenVoteReaction" value="${v}" ${state.teenVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><fieldset class="likert"><legend>4. Какую реакцию у вас вызвало то, как проголосовали 49-летние участники?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.adultVoteReaction===v?"selected":""}"><input type="radio" name="group-49-vote-reaction" data-final-answer="adultVoteReaction" value="${v}" ${state.adultVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><fieldset class="likert"><legend>5. Участники какого возраста голосовали?</legend><div class="attention-options">${[
       ["only_19","Только 19-летние участники"],
       ["only_49","Только 49-летние участники"],
-      ["19_69","19-летние и 67-летние участники"],
+      ["19_69","19-летние и 69-летние участники"],
       ["19_49","19-летние и 49-летние участники"]
     ].map(([value,label])=>`<label class="${state.combinedAttentionResponse===value?"selected":""}"><input type="radio" name="combined-attention" data-combined-attention value="${value}" ${state.combinedAttentionResponse===value?"checked":""}><span>${label}</span></label>`).join("")}</div></fieldset><label class="reaction-field"><span>6. Как вы думаете, какова была цель этого исследования? (необязательно)</span><textarea data-purpose-guess placeholder="Ваш ответ">${esc(state.studyPurposeGuess)}</textarea></label></div>${error?`<p class="error">${error}</p>`:""}${button("Завершить","submit-final")}</section>`;
     if(state.screen==="final")html=`<section class="card compact final"><div class="success">✓</div><h1>Спасибо за участие!</h1><p>Опрос завершён.</p><p class="participant">ID участника: ${state.participantId}</p></section>`;
@@ -137,13 +216,13 @@
     return`<span class="reference-marker ${classes}" style="left:${value}%"><span class="reference-badge">${isGroup?`<strong>${value}</strong><small><span>Большинство</span><span>${esc(label)}</span></small>`:`<small>${esc(label)}</small><strong>${value}</strong>`}</span></span>`;
   }
   function exposureRating(x,i,f){
-    const low=i===f.lowPosition,high=i===2;
+    const low=i===f.lowPosition,high=i===f.highPosition;
     const source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age);
     const markers=`<div class="reference-layer" aria-hidden="true">${marker(f.initialRatings[x],"Вы","participant")}${marker(f.groupRatings[x],source.majorityLabel,`group ${low?"low":high?"high":""}`,true)}</div>`;
     return`<article class="rating ${low?"low-support":""}"><div class="idea-title"><b class="badge">${i+1}</b><h2>${x}</h2></div><div class="slider exposure-only"><div class="slider-control has-markers"><div class="exposure-track"></div>${markers}</div><div class="anchors"><span>0 — совсем не полезно</span><span>100 — очень полезно</span></div></div></article>`;
   }
   function rating(x,i,val,phase,f,scale="usefulness",answered=true){
-    const low=f&&i===f.lowPosition,high=f&&i===2;
+    const low=f&&i===f.lowPosition,high=f&&i===f.highPosition;
     const source=f?sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age):null;
     const markers=f?`<div class="reference-layer" aria-hidden="true">${marker(f.initialRatings[x],"Вы","participant")}${marker(f.groupRatings[x],source.majorityLabel,`group ${low?"low":high?"high":""}`,true)}</div>`:"";
     const anchors=scale==="liking"?'<span>0 — совсем не нравится</span><span>100 — очень нравится</span>':'<span>0 — совсем не полезно</span><span>100 — очень полезно</span>';
@@ -172,7 +251,7 @@
     document.querySelectorAll("[data-final-self-satisfaction]").forEach(x=>x.onchange=()=>{state.finalSelfSatisfaction=+x.value;state.finalAbilitySelfRating=state.finalSelfSatisfaction;render();persist()});
     document.querySelectorAll("[data-purpose-guess]").forEach(x=>x.oninput=()=>{state.studyPurposeGuess=x.value;persist()});
     document.querySelectorAll("[data-idea]").forEach(x=>x.onclick=()=>{const c=state.categories[state.categoryIndex],idea=x.dataset.idea,i=c.selected.indexOf(idea);if(i>=0)c.selected.splice(i,1);else if(c.selected.length<3)c.selected.push(idea);error="";event(i>=0?"idea_deselected":"idea_selected",{idea,selected_position:i>=0?null:c.selected.length},c.key);render()});
-    document.querySelectorAll("[data-rating]").forEach(x=>x.oninput=()=>{x.closest(".slider").querySelector("output").value=x.value;x.style.setProperty("--range-fill",x.value+"%");x.dataset.answered="1";const c=state.categories[x.dataset.phase==="initial"?state.categoryIndex:state.feedbackIndex],map=x.dataset.phase==="initial"?c.initialRatings:c.reratings;map[x.dataset.rating]=+x.value;const submitId=x.dataset.phase==="initial"?"submit-initial":"submit-rerating",submit=document.getElementById(submitId);if(submit)submit.disabled=!c.selected.every(item=>hasOwn(map,item));persist()});
+    document.querySelectorAll("[data-rating]").forEach(x=>x.oninput=()=>{x.closest(".slider").querySelector("output").value=x.value;x.style.setProperty("--range-fill",x.value+"%");x.dataset.answered="1";const c=state.categories[x.dataset.phase==="initial"?state.categoryIndex:state.feedbackIndex],map=x.dataset.phase==="initial"?c.initialRatings:c.reratings;map[x.dataset.rating]=+x.value;const submitId=x.dataset.phase==="initial"?"submit-initial":"submit-rerating",submit=document.getElementById(submitId);if(submit)submit.disabled=!(x.dataset.phase==="initial"?c.selected:shownItems(c)).every(item=>hasOwn(map,item));persist()});
     document.querySelectorAll("[data-combined-attention]").forEach(x=>x.onchange=()=>{state.combinedAttentionResponse=x.value;render();persist()});
     const on=(id,fn)=>{const x=document.getElementById(id);if(x)x.onclick=fn};
     on("continue-demo",()=>{
@@ -207,10 +286,10 @@
     on("start",()=>go("selection","task_instruction_viewed",{instruction_count:1}));
     on("confirm-select",()=>{if(csel().selected.length!==3)return;const c=csel();go("rating_intro","three_ideas_confirmed",{selected_ideas:c.selected},c.key)});
     on("start-rating",()=>go("initial_rating","rating_instruction_viewed",{},csel().key));
-    on("submit-initial",()=>{const c=csel();if(!c.selected.every(x=>hasOwn(c.initialRatings,x)))return;groupRatings(c);event("initial_ratings_submitted",{selected_ideas:c.selected,ratings:c.initialRatings,comparison_source:c.comparisonSource,comparison_source_age:c.comparisonSourceAge,low_position:c.lowPosition+1},c.key);if(state.categoryIndex===0){state.categoryIndex=1;state.screen="selection"}else{state.feedbackIndex=0;state.screen="group_exposure";event("feedback_phase_started",{},state.categories[0].key)}render();scrollTo(0,0)});
-    on("continue-exposure",()=>{const f=state.categories[state.feedbackIndex],source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age);go("second_rating_intro","group_ratings_viewed",{comparison_source:f.comparisonSource,comparison_source_age:source.age,group_ratings:f.groupRatings,low_position:f.lowPosition+1},f.key)});
+    on("submit-initial",()=>{const c=csel();if(!c.selected.every(x=>hasOwn(c.initialRatings,x)))return;groupRatings(c);event("initial_ratings_submitted",{selected_ideas:c.selected,ratings:c.initialRatings,comparison_source:c.comparisonSource,comparison_source_age:c.comparisonSourceAge,low_position:c.lowPosition+1,control_position:c.controlPosition+1,high_position:c.highPosition===null?null:c.highPosition+1,feedback_items:c.feedbackItems,omitted_items:c.omittedItems,low_threshold_met:c.lowThresholdMet,low_selection_rule:c.lowSelectionRule,control_delta:c.controlDelta,high_target_included:c.highTargetIncluded,high_selection_rule:c.highSelectionRule},c.key);if(state.categoryIndex===0){state.categoryIndex=1;state.screen="selection"}else{state.feedbackIndex=0;state.screen="group_exposure";event("feedback_phase_started",{},state.categories[0].key)}render();scrollTo(0,0)});
+    on("continue-exposure",()=>{const f=state.categories[state.feedbackIndex],source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age);go("second_rating_intro","group_ratings_viewed",{comparison_source:f.comparisonSource,comparison_source_age:source.age,group_ratings:f.groupRatings,feedback_items:f.feedbackItems,omitted_items:f.omittedItems,low_position:f.lowPosition+1,control_position:f.controlPosition+1,high_position:f.highPosition===null?null:f.highPosition+1,low_threshold_met:f.lowThresholdMet,low_selection_rule:f.lowSelectionRule,control_delta:f.controlDelta,high_target_included:f.highTargetIncluded,high_selection_rule:f.highSelectionRule},f.key)});
     on("start-second-rating",()=>{const f=state.categories[state.feedbackIndex];f.reratings={};go("second_rating","second_rating_instruction_viewed",{slider_start_position:0,displayed_initial_grade:0},f.key)});
-    on("submit-rerating",()=>{const f=state.categories[state.feedbackIndex];if(!f.selected.every(x=>hasOwn(f.reratings,x)))return;const changes=Object.fromEntries(f.selected.map(x=>[x,f.reratings[x]-f.initialRatings[x]]));event("reratings_submitted",{reratings:f.reratings,changes,group_ratings:f.groupRatings,comparison_source:f.comparisonSource,comparison_source_age:f.comparisonSourceAge,low_position:f.lowPosition+1},f.key);if(state.feedbackIndex===0){state.memorySequence=Array.from({length:10},()=>ri(0,9));state.memoryStartedAt=null;state.screen="memory_intro"}else{state.screen="final_questions"}persist();render();scrollTo(0,0)});
+    on("submit-rerating",()=>{const f=state.categories[state.feedbackIndex],items=shownItems(f);if(!items.every(x=>hasOwn(f.reratings,x)))return;const changes=Object.fromEntries(items.map(x=>[x,f.reratings[x]-f.initialRatings[x]]));event("reratings_submitted",{reratings:f.reratings,changes,group_ratings:f.groupRatings,feedback_items:f.feedbackItems,omitted_items:f.omittedItems,comparison_source:f.comparisonSource,comparison_source_age:f.comparisonSourceAge,low_position:f.lowPosition+1,control_position:f.controlPosition+1,high_position:f.highPosition===null?null:f.highPosition+1,low_threshold_met:f.lowThresholdMet,low_selection_rule:f.lowSelectionRule,control_delta:f.controlDelta,high_target_included:f.highTargetIncluded,high_selection_rule:f.highSelectionRule},f.key);if(state.feedbackIndex===0){state.memorySequence=Array.from({length:10},()=>ri(0,9));state.memoryStartedAt=null;state.screen="memory_intro"}else{state.screen="final_questions"}persist();render();scrollTo(0,0)});
     on("submit-final",()=>{if(state.finalSelfSatisfaction===null||state.nationalIdentityImportance===null||state.teenVoteReaction===null||state.adultVoteReaction===null||!state.combinedAttentionResponse){error="Ответьте на все обязательные вопросы.";render();return}state.combinedAttentionCorrect=state.combinedAttentionResponse==="19_49";const combinedCheck={selected_pair:state.combinedAttentionResponse,correct_pair:"19_49",correct:state.combinedAttentionCorrect,ages:[19,49]};event("attention_checks_submitted",{combined_check:combinedCheck});state.completed=true;go("final","survey_completed",{final_ability_self_rating:state.finalAbilitySelfRating,final_self_satisfaction:state.finalSelfSatisfaction,national_identity_importance:state.nationalIdentityImportance,national_identity_group:"россияне",participant_19_vote_reaction:state.teenVoteReaction,participant_49_vote_reaction:state.adultVoteReaction,teen_vote_reaction:state.teenVoteReaction,adult_vote_reaction:state.adultVoteReaction,combined_attention_response:state.combinedAttentionResponse,combined_attention_correct:state.combinedAttentionCorrect,attention_checks:[combinedCheck],study_purpose_guess:state.studyPurposeGuess.trim()||null})});
     on("memory-start",()=>{state.memoryStartedAt=Date.now();go("memory","memory_task_started",{duration_ms:30000},state.categories[0].key)});
   }
