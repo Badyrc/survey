@@ -46,6 +46,11 @@
       .slider,.slider.with-markers{grid-template-columns:42px minmax(0,1fr);gap:6px 4px}
       .slider output{width:40px}
     }
+
+    .exclusion-eyebrow{background:var(--redsoft);color:var(--red)}
+    .exclusion-notice-card{display:grid;gap:16px;min-height:210px;align-content:center}
+    .exclusion-notice-text{margin:0;color:#a91f2b;font-size:clamp(1.12rem,3vw,1.55rem);font-weight:800;line-height:1.45}
+    .exclusion-notice-text strong{font-weight:950}
   </style>
 </head>
 <body>
@@ -53,16 +58,13 @@
 <script>
 (() => {
   "use strict";
-  const VERSION="teen_program_vote_v26_html", KEY=VERSION+"_backup";
+  const VERSION="teen_program_vote_v30_html", KEY=VERSION+"_backup";
   const RECEIVER="https://functions.yandexcloud.net/d4emijparrc706coq789";
-  const ADULT_SOURCE="Россияне со средним возрастом 49 лет";
-  const sourceDetails=(source,age)=>{
-    if(source==="adults_49")return{age:49,label:ADULT_SOURCE,introLabel:"49-летние россияне",majorityLabel:"49-летних россиян"};
-    const participantAge=Number(age);
-    return Number.isInteger(participantAge)
-      ?{age:participantAge,label:`${participantAge}-летние подростки в России`,introLabel:`${participantAge}-летние подростки`,majorityLabel:`${participantAge}-летних подростков`}
-      :{age:null,label:"Подростки вашего возраста в России",introLabel:"подростки вашего возраста",majorityLabel:"подростков вашего возраста"};
-  };
+  const GROUP_19_SOURCE="19-летние участники";
+  const GROUP_49_SOURCE="49-летние участники";
+  const sourceDetails=(source)=>source==="adults_49"
+    ?{age:49,label:GROUP_49_SOURCE,introLabel:GROUP_49_SOURCE,majorityLabel:"49-летних участников"}
+    :{age:19,label:GROUP_19_SOURCE,introLabel:GROUP_19_SOURCE,majorityLabel:"19-летних участников"};
   const categories=[
     {key:"teen_financial_programs",title:"Финансовые программы для подростков",ideas:["Стипендии подросткам за успехи в учёбе","Компенсация расходов на школьные принадлежности","Гранты на дополнительное образование и курсы","Оплачиваемые стажировки","Финансовая поддержка подростков из малообеспеченных семей","Гранты на подростковые проекты и инициативы","Льготные накопительные счета для подростков","Бесплатные консультации по личным финансам","Стартовые гранты для подростковых предпринимательских проектов","Финансовая помощь при поступлении в университет","Софинансирование летних образовательных программ"]},
     {key:"teen_social_programs",title:"Социальные программы для подростков",ideas:["Бесплатные спортивные секции для подростков","Муниципальные молодёжные центры с бесплатными занятиями","Бесплатные курсы программирования и цифровых навыков","Программа временной занятости подростков на каникулах","Бесплатные творческие студии и мастерские","Доступные поездки по России для школьников","Бесплатная психологическая помощь вне школы","Бесплатные консультации по выбору профессии","Программа наставничества с молодыми специалистами","Бесплатные летние образовательные лагеря","Программы безопасного поведения в интернете"]}
@@ -71,16 +73,17 @@
   const autonomy=[
     [1,"Я чувствую, что имею полную свободу в выборе жизненного пути"],[2,"Я чувствую, что жизнь тяготит меня"],[3,"Я чувствую себя свободным(ой) в выражении своих идей и мнений"],[4,"Обычно я делаю то, что мне говорят"],[5,"Люди, которые меня окружают, всегда учитывают мое мнение"],[6,"Я чувствую, что всегда могу быть самим(ой) собой"],[7,"В моем окружении для меня нет достаточных возможностей самому(ой) решать, как мне что-либо делать."]
   ];
-  const attention=[["adults_49",ADULT_SOURCE],["teenagers_same_age",""],["teachers","Учителя российских школ"],["parents","Родители подростков в России"]];
+  const attention=[["adults_49",GROUP_49_SOURCE],["teenagers_same_age",GROUP_19_SOURCE],["teachers","Учителя российских школ"],["parents","Родители российских школьников и студентов"]];
   const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a, clamp=n=>Math.max(0,Math.min(97,Math.round(n)));
   const shuffle=a=>{a=[...a];for(let i=a.length-1;i;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const fresh=()=>{
-    const firstLow=Math.random()<.5?0:1;
+    const firstLowPosition=Math.random()<.5?0:1;
+    const lowPositions=[firstLowPosition,1-firstLowPosition];
     const firstSource=Math.random()<.5?"adults_49":"teenagers_same_age";
     const sourceOrder=[firstSource,firstSource==="adults_49"?"teenagers_same_age":"adults_49"];
     const now=new Date().toISOString();
-    return{version:VERSION,participantId:`P${Date.now()}_${ri(10000,99999)}`,startedAtIso:now,updatedAtIso:now,completed:false,screen:"demographics",categoryIndex:0,feedbackIndex:0,demographics:{age:"",gender:"",classOrCourse:"",city:"",livingArrangement:"",relationshipStatus:""},autonomyResponses:Array(7).fill(null),initialSkillSelfRating:null,finalAbilitySelfRating:null,nationalIdentityImportance:null,teenVoteReaction:null,adultVoteReaction:null,categories:categories.map((c,i)=>({key:c.key,title:c.title,optionOrder:shuffle(c.ideas),selected:[],initialRatings:{},reratings:{},groupRatings:{},comparisonSource:sourceOrder[i],comparisonSourceAge:sourceOrder[i]==="adults_49"?49:null,lowPosition:i?1-firstLow:firstLow,lowDelta:null,highDelta:null,attentionOrder:shuffle(attention.map(x=>x[0])),attentionResponse:"",attentionCorrect:null})),memorySequence:[],memoryStartedAt:null,eventSeq:0,events:[]}
+    return{version:VERSION,participantId:`P${Date.now()}_${ri(10000,99999)}`,startedAtIso:now,updatedAtIso:now,completed:false,screen:"demographics",categoryIndex:0,feedbackIndex:0,demographics:{age:"",gender:"",classOrCourse:"",city:"",livingArrangement:"",relationshipStatus:""},autonomyResponses:Array(7).fill(null),initialSkillSelfRating:null,initialSelfLiking:null,finalAbilitySelfRating:null,finalSelfSatisfaction:null,nationalIdentityImportance:null,teenVoteReaction:null,adultVoteReaction:null,studyPurposeGuess:"",categories:categories.map((c,i)=>({key:c.key,title:c.title,optionOrder:shuffle(c.ideas),selected:[],initialRatings:{},reratings:{},groupRatings:{},comparisonSource:sourceOrder[i],comparisonSourceAge:sourceOrder[i]==="adults_49"?49:19,lowPosition:lowPositions[i],lowDelta:null,highDelta:null,attentionOrder:shuffle(attention.map(x=>x[0])),attentionResponse:"",attentionCorrect:null})),memorySequence:[],memoryStartedAt:null,eventSeq:0,events:[]}
   };
   let state;try{state=JSON.parse(localStorage.getItem(KEY))||fresh();if(state.version!==VERSION)state=fresh()}catch(e){state=fresh()}
   let error="",saveTimer,memoryTimer;
@@ -94,33 +97,36 @@
   function render(){
     clearInterval(memoryTimer);const app=document.getElementById("app"),c=state.categories[state.categoryIndex],f=state.categories[state.feedbackIndex];let html="";
     if(state.screen==="demographics"){
-      const enteredAge=Number(state.demographics.age);
-      const isAdult=state.demographics.age!==""&&Number.isFinite(enteredAge)&&enteredAge>=18;
       html=`<section class="card compact"><h1>Короткая анкета</h1><div class="grid2">
-      <label class="field"><span>Возраст</span><input data-demo="age" type="number" min="14" max="18" inputmode="numeric" value="${esc(state.demographics.age)}" placeholder="14–18"></label>
+      <label class="field"><span>Возраст</span><input data-demo="age" type="number" min="14" max="19" inputmode="numeric" value="${esc(state.demographics.age)}" placeholder="14–19"></label>
       <label class="field"><span>Пол</span><select data-demo="gender"><option value="">Выберите</option><option value="Мужской" ${state.demographics.gender==="Мужской"?"selected":""}>Мужской</option><option value="Женский" ${state.demographics.gender==="Женский"?"selected":""}>Женский</option></select></label>
       <label class="field"><span>Класс / курс</span><input data-demo="classOrCourse" type="text" value="${esc(state.demographics.classOrCourse)}"></label>
       <label class="field"><span>Город</span><input data-demo="city" type="text" value="${esc(state.demographics.city)}"></label>
-      ${!isAdult?`<label class="field"><span>Я живу…</span><select data-demo="livingArrangement"><option value="">Выберите</option><option value="alone" ${state.demographics.livingArrangement==="alone"?"selected":""}>Один / одна</option><option value="with_parents" ${state.demographics.livingArrangement==="with_parents"?"selected":""}>С родителями или опекунами</option></select></label>`:""}
     </div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","continue-demo")}</section>`;
     }
     if(state.screen==="adult_demographics")html=`<section class="card compact"><h1>Ещё два вопроса</h1><div class="grid2">
       <label class="field"><span>Я живу…</span><select data-demo="livingArrangement"><option value="">Выберите</option><option value="alone" ${state.demographics.livingArrangement==="alone"?"selected":""}>Один / одна</option><option value="with_parents" ${state.demographics.livingArrangement==="with_parents"?"selected":""}>С родителями или опекунами</option><option value="with_partner" ${state.demographics.livingArrangement==="with_partner"?"selected":""}>С партнёром / партнёршей</option></select></label>
       <label class="field"><span>Состоите ли вы сейчас в романтических отношениях?</span><select data-demo="relationshipStatus"><option value="">Выберите</option><option value="yes" ${state.demographics.relationshipStatus==="yes"?"selected":""}>Да</option><option value="no" ${state.demographics.relationshipStatus==="no"?"selected":""}>Нет</option><option value="prefer_not_to_answer" ${state.demographics.relationshipStatus==="prefer_not_to_answer"?"selected":""}>Предпочитаю не отвечать</option></select></label>
     </div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","continue-adult-demo")}</section>`;
-    if(state.screen==="bpns")html=`<section class="card wide"><div class="likert-list">${autonomy.map((x,i)=>`<fieldset class="likert"><legend>${x[0]}. ${x[1]}</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.autonomyResponses[i]===v?"selected":""}"><input type="radio" name="a${i}" data-auto="${i}" value="${v}" ${state.autonomyResponses[i]===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset>`).join("")}<fieldset class="likert"><legend>8. Насколько умелым(ой) вы себя считаете?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.initialSkillSelfRating===v?"selected":""}"><input type="radio" name="initial-skill" data-initial-skill value="${v}" ${state.initialSkillSelfRating===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем не умелым(ой)</span><span>Очень умелым(ой)</span></div></fieldset></div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","continue-bpns")}</section>`;
+    if(state.screen==="bpns")html=`<section class="card wide"><div class="likert-list">${autonomy.map((x,i)=>`<fieldset class="likert"><legend>${x[0]}. ${x[1]}</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.autonomyResponses[i]===v?"selected":""}"><input type="radio" name="a${i}" data-auto="${i}" value="${v}" ${state.autonomyResponses[i]===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset>`).join("")}<fieldset class="likert"><legend>8. В целом, я себе нравлюсь.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.initialSelfLiking===v?"selected":""}"><input type="radio" name="initial-self-liking" data-initial-self-liking value="${v}" ${state.initialSelfLiking===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset></div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","continue-bpns")}</section>`;
     if(state.screen==="instruction")html=`<section class="instruction"><div class="instruction-copy">В каждой категории выберите 3 идеи, которые Вы считаете наиболее важными.</div>${button("Начать","start")}</section>`;
     if(state.screen==="selection")html=`<section class="card wide">${progress(state.categoryIndex,"vote")}<h1>${c.title}</h1><div class="selection-head"><p>Выберите 3 идеи</p><strong>${c.selected.length} / 3</strong></div>${c.selected.length?`<div class="selected-strip">${c.selected.map((x,i)=>`<span><b class="badge">${i+1}</b>${x}</span>`).join("")}</div>`:""}<div class="ideas">${c.optionOrder.map(x=>{const pos=c.selected.indexOf(x)+1,sel=pos>0;return`<button class="idea ${sel?"selected":""}" data-idea="${esc(x)}" ${c.selected.length===3&&!sel?"disabled":""}><b class="badge">${sel?pos:""}</b><span>${x}</span></button>`}).join("")}</div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","confirm-select",c.selected.length!==3)}</section>`;
     if(state.screen==="rating_intro")html=`<section class="instruction"><span class="eyebrow">${c.title}</span><div class="instruction-copy">Оцените, насколько полезно каждое выбранное предложение.</div>${button("Начать","start-rating")}</section>`;
     if(state.screen==="initial_rating")html=`<section class="card wide">${progress(state.categoryIndex,"vote")}<h1>${c.title}</h1><p class="lead">Оцените все три предложения.</p><div class="rating-list">${c.selected.map((x,i)=>rating(x,i,c.initialRatings[x]??50,"initial")).join("")}</div>${button("Продолжить","submit-initial")}</section>`;
     if(state.screen==="feedback_intro")html=`<section class="instruction"><div class="instruction-copy">Теперь вы увидите, как другие участники оценили выбранные вами предложения.</div>${button("Продолжить","feedback-start")}</section>`;
-    if(state.screen==="group_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy group-copy"><span>Вы увидите, как проголосовали</span><strong>${sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age).introLabel}.</strong><span>Предложения с низкой оценкой будут выделены красным и, скорее всего, исключены.</span></div>${button("Продолжить","group-continue")}</section>`;
-    if(state.screen==="attention")html=`<section class="card compact"><span class="eyebrow">${f.title}</span><h1>Короткий вопрос</h1><p class="attention-q">Чьи оценки вы сейчас увидите?</p><div class="attention-options">${f.attentionOrder.map(v=>{const lab=v==="teenagers_same_age"?sourceDetails(v,state.demographics.age).label:attention.find(x=>x[0]===v)[1];return`<label class="${f.attentionResponse===v?"selected":""}"><input type="radio" name="attention" value="${v}" ${f.attentionResponse===v?"checked":""}><span>${lab}</span></label>`}).join("")}</div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","submit-attention")}</section>`;
-    if(state.screen==="rerating_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy">Подтвердите свои оценки. Вы можете оставить их прежними или изменить./div>${button("Продолжить","rerating-start")}</section>`;
+    if(state.screen==="group_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy group-copy"><span>Вы увидите, как проголосовали</span><strong>${sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age).introLabel}.</strong><span>Предложения с низкой оценкой будут выделены красным и могут быть исключены.</span></div>${button("Продолжить","group-continue")}</section>`;
+    if(state.screen==="attention")html=`<section class="card compact"><span class="eyebrow">${f.title}</span><h1>Короткий вопрос</h1><p class="attention-q">Чьи оценки вы сейчас увидите?</p><div class="attention-options">${f.attentionOrder.map(v=>{const lab=attention.find(x=>x[0]===v)[1];return`<label class="${f.attentionResponse===v?"selected":""}"><input type="radio" name="attention" value="${v}" ${f.attentionResponse===v?"checked":""}><span>${lab}</span></label>`}).join("")}</div>${error?`<p class="error">${error}</p>`:""}${button("Продолжить","submit-attention")}</section>`;
+    if(state.screen==="exclusion_notice"){
+      const excludedItem=f.selected[f.lowPosition];
+      const groupAge=f.comparisonSource==="adults_49"?49:19;
+      const groupOpening=groupAge===19?"Среди молодых участников":"Среди участников";
+      html=`<section class="card wide">${progress(state.feedbackIndex,"review")}<h1>${f.title}</h1><div class="rating-list"><article class="rating low-support exclusion-notice-card"><div class="idea-title"><b class="badge">${f.lowPosition+1}</b><h2>${esc(excludedItem)}</h2></div><p class="exclusion-notice-text">${groupOpening}, большинству из которых было ${groupAge} лет, идея <strong>«${esc(excludedItem)}»</strong> оказалась непопулярной, получила низкую оценку и может быть исключена.</p></article></div>${button("Продолжить","exclusion-continue")}</section>`;
+    }
+    if(state.screen==="rerating_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy">Подтвердите свои оценки. Вы можете оставить их прежними или изменить.</div>${button("Продолжить","rerating-start")}</section>`;
     if(state.screen==="rerating")html=`<section class="card wide">${progress(state.feedbackIndex,"review")}<h1>${f.title}</h1><div class="rating-list">${f.selected.map((x,i)=>rating(x,i,f.reratings[x]??f.initialRatings[x],"rerating",f)).join("")}</div>${button("Продолжить","submit-rerating")}</section>`;
     if(state.screen==="memory_intro")html=`<section class="instruction"><span class="eyebrow">Задание на память</span><div class="instruction-copy">Пожалуйста, запомните следующую последовательность цифр.</div>${button("Начать","memory-start")}</section>`;
     if(state.screen==="memory"){html=`<section class="memory"><span class="eyebrow">Задание на память</span><h1>Запоминайте последовательность цифр</h1><div class="memory-number" id="memory-number"></div><div class="timer" id="timer">30 сек.</div><div class="memory-progress"><span id="memory-bar"></span></div></section>`}
-    if(state.screen==="final_questions")html=`<section class="card wide"><h1>Последние вопросы</h1><p class="lead">Пожалуйста, ответьте на все вопросы.</p><div class="likert-list"><fieldset class="likert"><legend>1. Насколько способным(ой) вы себя считаете?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.finalAbilitySelfRating===v?"selected":""}"><input type="radio" name="final-ability" data-final-answer="finalAbilitySelfRating" value="${v}" ${state.finalAbilitySelfRating===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем не способным(ой)</span><span>Очень способным(ой)</span></div></fieldset><fieldset class="likert"><legend>2. Принадлежность к россиянам — важная часть моего представления о себе.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.nationalIdentityImportance===v?"selected":""}"><input type="radio" name="national-identity" data-final-answer="nationalIdentityImportance" value="${v}" ${state.nationalIdentityImportance===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>3. Какую реакцию у вас вызвало то, как проголосовали подростки?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.teenVoteReaction===v?"selected":""}"><input type="radio" name="teen-vote-reaction" data-final-answer="teenVoteReaction" value="${v}" ${state.teenVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><fieldset class="likert"><legend>4. Какую реакцию у вас вызвало то, как проголосовали взрослые?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.adultVoteReaction===v?"selected":""}"><input type="radio" name="adult-vote-reaction" data-final-answer="adultVoteReaction" value="${v}" ${state.adultVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset></div>${error?`<p class="error">${error}</p>`:""}${button("Завершить","submit-final")}</section>`;
+    if(state.screen==="final_questions")html=`<section class="card wide"><h1>Последние вопросы</h1><p class="lead">Пожалуйста, ответьте на все обязательные вопросы.</p><div class="likert-list"><fieldset class="likert"><legend>1. В целом, я доволен(на) собой.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.finalSelfSatisfaction===v?"selected":""}"><input type="radio" name="final-self-satisfaction" data-final-self-satisfaction value="${v}" ${state.finalSelfSatisfaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>2. Принадлежность к россиянам — важная часть моего представления о себе.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.nationalIdentityImportance===v?"selected":""}"><input type="radio" name="national-identity" data-final-answer="nationalIdentityImportance" value="${v}" ${state.nationalIdentityImportance===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>3. Какую реакцию у вас вызвало то, как проголосовали 19-летние участники?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.teenVoteReaction===v?"selected":""}"><input type="radio" name="group-19-vote-reaction" data-final-answer="teenVoteReaction" value="${v}" ${state.teenVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><fieldset class="likert"><legend>4. Какую реакцию у вас вызвало то, как проголосовали 49-летние участники?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.adultVoteReaction===v?"selected":""}"><input type="radio" name="group-49-vote-reaction" data-final-answer="adultVoteReaction" value="${v}" ${state.adultVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><label class="reaction-field"><span>5. Как вы думаете, какова была цель этого исследования? (необязательно)</span><textarea data-purpose-guess placeholder="Ваш ответ">${esc(state.studyPurposeGuess)}</textarea></label></div>${error?`<p class="error">${error}</p>`:""}${button("Завершить","submit-final")}</section>`;
     if(state.screen==="final")html=`<section class="card compact final"><div class="success">✓</div><h1>Спасибо за участие!</h1><p>Опрос завершён.</p><p class="participant">ID участника: ${state.participantId}</p></section>`;
     app.innerHTML=shell(html);bind();if(state.screen==="memory")startMemory();
   }
@@ -129,50 +135,50 @@
     const marker=(value,label,classes,isGroup=false)=>`<span class="reference-marker ${classes}" style="left:${value}%"><span class="reference-badge">${isGroup?`<strong>${value}</strong><small><span>Большинство</span><span>${esc(label)}</span></small>`:`<small>${esc(label)}</small><strong>${value}</strong>`}</span></span>`;
     const source=f?sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age):null;
     const markers=f?`<div class="reference-layer" aria-hidden="true">${marker(f.initialRatings[x],"Вы","participant")}${marker(f.groupRatings[x],source.majorityLabel,`group ${low?"low":high?"high":""}`,true)}</div>`:"";
-    return`<article class="rating ${low?"low-support":""}"><div class="idea-title"><b class="badge">${i+1}</b><h2>${x}</h2></div>${f&&low?'<p class="exclusion">Низкая поддержка — предложение, скорее всего, будет исключено.</p>':""}<div class="slider ${f?"with-markers":""}"><div class="slider-value-column"><output>${val}</output></div><div class="slider-control ${f?"has-markers":""}"><input type="range" min="0" max="100" value="${val}" style="--range-fill:${val}%" data-rating="${esc(x)}" data-phase="${phase}">${markers}</div><div class="anchors"><span>0 — совсем не полезно</span><span>100 — очень полезно</span></div></div></article>`
+    return`<article class="rating ${low?"low-support":""}"><div class="idea-title"><b class="badge">${i+1}</b><h2>${x}</h2></div>${f&&low?'<p class="exclusion">Низкая поддержка — это предложение может быть исключено.</p>':""}<div class="slider ${f?"with-markers":""}"><div class="slider-value-column"><output>${val}</output></div><div class="slider-control ${f?"has-markers":""}"><input type="range" min="0" max="100" value="${val}" style="--range-fill:${val}%" data-rating="${esc(x)}" data-phase="${phase}">${markers}</div><div class="anchors"><span>0 — совсем не полезно</span><span>100 — очень полезно</span></div></div></article>`
   }
   function go(screen,type,payload={},cat=""){state.screen=screen;error="";event(type,payload,cat);render();scrollTo(0,0)}
   function bind(){
     document.querySelectorAll("[data-demo]").forEach(x=>x.oninput=()=>{
       const key=x.dataset.demo;
-      const wasAdult=Number(state.demographics.age)>=18;
       state.demographics[key]=x.value;
       if(key==="age"){
         const isAdult=Number(x.value)>=18;
         if(isAdult){
           if(state.demographics.relationshipStatus==="not_asked_under_18")state.demographics.relationshipStatus="";
+          if(state.demographics.livingArrangement==="not_asked_under_18")state.demographics.livingArrangement="";
         }else{
           state.demographics.relationshipStatus="not_asked_under_18";
-          if(state.demographics.livingArrangement==="with_partner")state.demographics.livingArrangement="";
+          state.demographics.livingArrangement="not_asked_under_18";
         }
-        persist();
-        if(wasAdult!==isAdult)render();
-        return;
       }
       persist();
     });
     document.querySelectorAll("[data-auto]").forEach(x=>x.onchange=()=>{state.autonomyResponses[+x.dataset.auto]=+x.value;render();persist()});
-    document.querySelectorAll("[data-initial-skill]").forEach(x=>x.onchange=()=>{state.initialSkillSelfRating=+x.value;render();persist()});
+    document.querySelectorAll("[data-initial-self-liking]").forEach(x=>x.onchange=()=>{state.initialSelfLiking=+x.value;state.initialSkillSelfRating=state.initialSelfLiking;render();persist()});
     document.querySelectorAll("[data-final-answer]").forEach(x=>x.onchange=()=>{state[x.dataset.finalAnswer]=+x.value;render();persist()});
+    document.querySelectorAll("[data-final-self-satisfaction]").forEach(x=>x.onchange=()=>{state.finalSelfSatisfaction=+x.value;state.finalAbilitySelfRating=state.finalSelfSatisfaction;render();persist()});
+    document.querySelectorAll("[data-purpose-guess]").forEach(x=>x.oninput=()=>{state.studyPurposeGuess=x.value;persist()});
     document.querySelectorAll("[data-idea]").forEach(x=>x.onclick=()=>{const c=state.categories[state.categoryIndex],idea=x.dataset.idea,i=c.selected.indexOf(idea);if(i>=0)c.selected.splice(i,1);else if(c.selected.length<3)c.selected.push(idea);error="";event(i>=0?"idea_deselected":"idea_selected",{idea,selected_position:i>=0?null:c.selected.length},c.key);render()});
     document.querySelectorAll("[data-rating]").forEach(x=>x.oninput=()=>{x.closest(".slider").querySelector("output").value=x.value;x.style.setProperty("--range-fill",x.value+"%");const c=state.categories[x.dataset.phase==="initial"?state.categoryIndex:state.feedbackIndex],map=x.dataset.phase==="initial"?c.initialRatings:c.reratings;map[x.dataset.rating]=+x.value;persist()});
     document.querySelectorAll('input[name="attention"]').forEach(x=>x.onchange=()=>{state.categories[state.feedbackIndex].attentionResponse=x.value;render();persist()});
     const on=(id,fn)=>{const x=document.getElementById(id);if(x)x.onclick=fn};
     on("continue-demo",()=>{
       const a=+state.demographics.age,isAdult=a>=18;
-      if(!Number.isInteger(a)||a<14||a>18||!state.demographics.gender||(!isAdult&&!state.demographics.livingArrangement)){
-        error=isAdult?"Укажите возраст от 14 до 18 лет и выберите пол.":"Укажите возраст от 14 до 18 лет, пол и с кем вы живёте.";
+      if(!Number.isInteger(a)||a<14||a>19||!state.demographics.gender){
+        error="Укажите возраст от 14 до 19 лет и выберите пол.";
         render();
         return;
       }
       if(isAdult){
         if(state.demographics.relationshipStatus==="not_asked_under_18")state.demographics.relationshipStatus="";
+        if(state.demographics.livingArrangement==="not_asked_under_18")state.demographics.livingArrangement="";
         go("adult_demographics","basic_demographics_submitted",{age:state.demographics.age,gender:state.demographics.gender,classOrCourse:state.demographics.classOrCourse,city:state.demographics.city});
         return;
       }
       state.demographics.relationshipStatus="not_asked_under_18";
-      if(state.demographics.livingArrangement==="with_partner")state.demographics.livingArrangement="";
-      state.categories.forEach(c=>c.comparisonSourceAge=c.comparisonSource==="adults_49"?49:a);
+      state.demographics.livingArrangement="not_asked_under_18";
+      state.categories.forEach(c=>c.comparisonSourceAge=c.comparisonSource==="adults_49"?49:19);
       go("bpns","demographics_submitted",{...state.demographics});
     });
     on("continue-adult-demo",()=>{
@@ -182,20 +188,21 @@
         render();
         return;
       }
-      state.categories.forEach(c=>c.comparisonSourceAge=c.comparisonSource==="adults_49"?49:a);
+      state.categories.forEach(c=>c.comparisonSourceAge=c.comparisonSource==="adults_49"?49:19);
       go("bpns","demographics_submitted",{...state.demographics});
     });
-    on("continue-bpns",()=>{if(state.autonomyResponses.some(x=>x===null)||state.initialSkillSelfRating===null){error="Ответьте на все вопросы.";render();return}go("instruction","autonomy_subscale_submitted",{raw_responses:state.autonomyResponses,item_ids:autonomy.map(x=>x[0]),responses:autonomy.map((x,i)=>({item_id:x[0],response:state.autonomyResponses[i]})),initial_skill_self_rating:state.initialSkillSelfRating})});
+    on("continue-bpns",()=>{if(state.autonomyResponses.some(x=>x===null)||state.initialSelfLiking===null){error="Ответьте на все вопросы.";render();return}go("instruction","autonomy_subscale_submitted",{raw_responses:state.autonomyResponses,item_ids:autonomy.map(x=>x[0]),responses:autonomy.map((x,i)=>({item_id:x[0],response:state.autonomyResponses[i]})),initial_skill_self_rating:state.initialSkillSelfRating,initial_self_liking:state.initialSelfLiking})});
     on("start",()=>go("selection","task_instruction_viewed",{instruction_count:1}));
     on("confirm-select",()=>{if(csel().selected.length!==3)return;const c=csel();c.selected.forEach(x=>c.initialRatings[x]=c.initialRatings[x]??50);go("rating_intro","three_ideas_confirmed",{selected_ideas:c.selected},c.key)});
     on("start-rating",()=>go("initial_rating","rating_instruction_viewed",{},csel().key));
     on("submit-initial",()=>{const c=csel();c.selected.forEach(x=>{c.initialRatings[x]=c.initialRatings[x]??50;c.reratings[x]=c.initialRatings[x]});groupRatings(c);event("initial_ratings_submitted",{selected_ideas:c.selected,ratings:c.initialRatings,comparison_source:c.comparisonSource,comparison_source_age:c.comparisonSourceAge,low_position:c.lowPosition+1},c.key);if(state.categoryIndex===0){state.categoryIndex=1;state.screen="selection"}else{state.feedbackIndex=0;state.screen="feedback_intro"}render();scrollTo(0,0)});
     on("feedback-start",()=>go("group_intro","feedback_phase_started"));
-    on("group-continue",()=>{const f=state.categories[state.feedbackIndex],source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age);go("attention","comparison_group_introduced",{source:f.comparisonSource,source_age:source.age,source_label:source.label},f.key)});
-    on("submit-attention",()=>{const f=state.categories[state.feedbackIndex];if(!f.attentionResponse){error="Выберите один вариант.";render();return}f.attentionCorrect=f.attentionResponse===f.comparisonSource;go("rerating_intro","attention_check_submitted",{selected_source:f.attentionResponse,correct_source:f.comparisonSource,correct:f.attentionCorrect},f.key)});
-    on("rerating-start",()=>go("rerating","rerating_instruction_viewed",{},state.categories[state.feedbackIndex].key));
+    on("group-continue",()=>{const f=state.categories[state.feedbackIndex],source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age),item=f.selected[f.lowPosition];go("attention","comparison_group_introduced",{source:f.comparisonSource,source_age:source.age,source_label:source.label,may_be_excluded_item:item,likely_excluded_item:item},f.key)});
+    on("submit-attention",()=>{const f=state.categories[state.feedbackIndex],item=f.selected[f.lowPosition];if(!f.attentionResponse){error="Выберите один вариант.";render();return}f.attentionCorrect=f.attentionResponse===f.comparisonSource;go("exclusion_notice","attention_check_submitted",{selected_source:f.attentionResponse,correct_source:f.comparisonSource,correct:f.attentionCorrect,may_be_excluded_item:item,likely_excluded_item:item},f.key)});
+    on("exclusion-continue",()=>{const f=state.categories[state.feedbackIndex],item=f.selected[f.lowPosition];go("rerating","exclusion_notice_viewed",{may_be_excluded_item:item,likely_excluded_item:item,low_position:f.lowPosition+1,group_rating:f.groupRatings[item]},f.key)});
+    on("rerating-start",()=>go("attention","rerating_instruction_viewed",{},state.categories[state.feedbackIndex].key));
     on("submit-rerating",()=>{const f=state.categories[state.feedbackIndex];f.selected.forEach(x=>f.reratings[x]=f.reratings[x]??f.initialRatings[x]);const changes=Object.fromEntries(f.selected.map(x=>[x,f.reratings[x]-f.initialRatings[x]]));event("reratings_submitted",{reratings:f.reratings,changes,group_ratings:f.groupRatings,comparison_source:f.comparisonSource,comparison_source_age:f.comparisonSourceAge,low_position:f.lowPosition+1},f.key);if(state.feedbackIndex===0){state.memorySequence=Array.from({length:10},()=>ri(0,9));state.memoryStartedAt=null;state.screen="memory_intro"}else{state.screen="final_questions"}persist();render();scrollTo(0,0)});
-    on("submit-final",()=>{if(state.finalAbilitySelfRating===null||state.nationalIdentityImportance===null||state.teenVoteReaction===null||state.adultVoteReaction===null){error="Ответьте на все вопросы.";render();return}state.completed=true;go("final","survey_completed",{final_ability_self_rating:state.finalAbilitySelfRating,national_identity_importance:state.nationalIdentityImportance,national_identity_group:"россияне",teen_vote_reaction:state.teenVoteReaction,adult_vote_reaction:state.adultVoteReaction})});
+    on("submit-final",()=>{if(state.finalSelfSatisfaction===null||state.nationalIdentityImportance===null||state.teenVoteReaction===null||state.adultVoteReaction===null){error="Ответьте на все обязательные вопросы.";render();return}state.completed=true;go("final","survey_completed",{final_ability_self_rating:state.finalAbilitySelfRating,final_self_satisfaction:state.finalSelfSatisfaction,national_identity_importance:state.nationalIdentityImportance,national_identity_group:"россияне",participant_19_vote_reaction:state.teenVoteReaction,participant_49_vote_reaction:state.adultVoteReaction,teen_vote_reaction:state.teenVoteReaction,adult_vote_reaction:state.adultVoteReaction,study_purpose_guess:state.studyPurposeGuess.trim()||null})});
     on("memory-start",()=>{state.memoryStartedAt=Date.now();go("memory","memory_task_started",{duration_ms:30000},state.categories[0].key)});
   }
   const csel=()=>state.categories[state.categoryIndex];
