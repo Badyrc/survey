@@ -267,7 +267,7 @@
     if(state.screen==="initial_rating")html=`<section class="card wide">${progress(state.categoryIndex,"vote")}<h1>${c.title}</h1><p class="lead">Оцените все три предложения.</p><div class="rating-list">${c.selected.map((x,i)=>rating(x,i,hasOwn(c.initialRatings,x)?c.initialRatings[x]:0,"initial",null,"usefulness",hasOwn(c.initialRatings,x))).join("")}</div>${button("Продолжить","submit-initial",!c.selected.every(x=>hasOwn(c.initialRatings,x)))}</section>`;
     if(state.screen==="group_exposure"){
       const source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age);
-      html=`<section class="card wide">${progress(state.feedbackIndex,"exposure")}<h1>${f.title}</h1><p class="group-age-note">Большинство (средний возраст — ${source.age} лет)</p><div class="rating-list">${shownItems(f).map(x=>exposureRating(x,f.selected.indexOf(x),f)).join("")}</div>${button("Продолжить","continue-exposure")}</section>`;
+      html=`<section class="card wide">${progress(state.feedbackIndex,"exposure")}<h1>${f.title}</h1><p class="group-age-note">Большинство участниокв (средний возраст — ${source.age} лет)</p><div class="rating-list">${shownItems(f).map(x=>exposureRating(x,f.selected.indexOf(x),f)).join("")}</div>${button("Продолжить","continue-exposure")}</section>`;
     }
     if(state.screen==="second_rating_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy">Пожалуйста, оцените, насколько вам нравятся эти идеи.</div>${button("Начать","start-second-rating")}</section>`;
     if(state.screen==="second_rating")html=`<section class="card wide">${progress(state.feedbackIndex,"second")}<h1>${f.title}</h1><p class="lead">Насколько вам нравятся эти идеи?</p><div class="rating-list">${f.selected.map(x=>rating(x,f.selected.indexOf(x),hasOwn(f.reratings,x)?f.reratings[x]:0,"rerating",null,"liking",hasOwn(f.reratings,x))).join("")}</div>${button("Продолжить","submit-rerating",!f.selected.every(x=>hasOwn(f.reratings,x)))}</section>`;
@@ -283,7 +283,7 @@
     app.innerHTML=shell(html);bind();if(state.screen==="memory")startMemory();
   }
   function marker(value,label,classes,isGroup=false){
-    return`<span class="reference-marker ${classes}" style="left:${value}%"><span class="reference-badge">${isGroup?`<strong>${value}</strong><small><span>Большинство</span><span>${esc(label)}</span></small>`:`<small>${esc(label)}</small><strong>${value}</strong>`}</span></span>`;
+    return`<span class="reference-marker ${classes}" style="left:${value}%"><span class="reference-badge">${isGroup?`<strong>${value}</strong><small><span>Большинство участников </span><span>${esc(label)}</span></small>`:`<small>${esc(label)}</small><strong>${value}</strong>`}</span></span>`;
   }
   function exposureRating(x,i,f){
     const low=i===f.lowPosition,high=i===f.highPosition;
