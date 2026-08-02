@@ -196,7 +196,7 @@
     }else{
       c.highPosition=null;
       c.highTargetIncluded=false;
-      c.highSelectionRule="omitted_no_room_for_minimum_20_point_increase";
+      c.highSelectionRule="converted_to_control_no_room_for_minimum_20_point_increase";
     }
 
     const stableCandidates=remaining.filter(x=>!highChoice||x.index!==highChoice.index);
@@ -207,23 +207,31 @@
 
     const low=lowChoice.item;
     const stable=stableChoice.item;
-    const lowRating=ri(20,30);
+    const lowRating=ri(11,19);
 
-    // Keep the control discrepancy between 1 and 5 actual points.
-    const stableRating=c.initialRatings[stable];
-    const stableDirections=[];
-    if(stableRating>0)stableDirections.push(-1);
-    if(stableRating<97)stableDirections.push(1);
-    const stableSign=stableDirections[ri(0,stableDirections.length-1)];
-    const stableRoom=stableSign>0?97-stableRating:stableRating;
-    const stableDelta=stableSign*ri(1,Math.min(5,stableRoom));
+    // Keep every control discrepancy between 1 and 5 actual points.
+    const makeControlDelta=rating=>{
+      const directions=[];
+      if(rating>0)directions.push(-1);
+      if(rating<97)directions.push(1);
+      const sign=directions[ri(0,directions.length-1)];
+      const room=sign>0?97-rating:rating;
+      return sign*ri(1,Math.min(5,room));
+    };
 
     c.lowDelta=lowRating-c.initialRatings[low];
-    c.controlDelta=stableDelta;
-    c.groupRatings={
-      [low]:lowRating,
-      [stable]:stableRating+stableDelta
-    };
+    c.groupRatings={[low]:lowRating};
+
+    const controlChoices=highChoice?[stableChoice]:remaining;
+    const controlDeltas={};
+    controlChoices.forEach(choice=>{
+      const rating=c.initialRatings[choice.item];
+      const delta=makeControlDelta(rating);
+      controlDeltas[choice.item]=delta;
+      c.groupRatings[choice.item]=rating+delta;
+    });
+    c.controlDelta=controlDeltas[stable];
+    c.controlDeltas=controlDeltas;
 
     if(highChoice){
       const high=highChoice.item;
@@ -235,9 +243,8 @@
       c.highDelta=null;
     }
 
-    const included=new Set([low,stable,...(highChoice?[highChoice.item]:[])]);
-    c.feedbackItems=c.selected.filter(item=>included.has(item));
-    c.omittedItems=c.selected.filter(item=>!included.has(item));
+    c.feedbackItems=c.selected.filter(item=>hasOwn(c.groupRatings,item));
+    c.omittedItems=c.selected.filter(item=>!hasOwn(c.groupRatings,item));
   }
   function render(){
     clearInterval(memoryTimer);const app=document.getElementById("app"),c=state.categories[state.categoryIndex],f=state.categories[state.feedbackIndex];let html="";
@@ -263,7 +270,7 @@
       html=`<section class="card wide">${progress(state.feedbackIndex,"exposure")}<h1>${f.title}</h1><p class="group-age-note">Большинство (средний возраст — ${source.age} лет)</p><div class="rating-list">${shownItems(f).map(x=>exposureRating(x,f.selected.indexOf(x),f)).join("")}</div>${button("Продолжить","continue-exposure")}</section>`;
     }
     if(state.screen==="second_rating_intro")html=`<section class="instruction"><span class="eyebrow">${f.title}</span><div class="instruction-copy">Пожалуйста, оцените, насколько вам нравятся эти идеи.</div>${button("Начать","start-second-rating")}</section>`;
-    if(state.screen==="second_rating")html=`<section class="card wide">${progress(state.feedbackIndex,"second")}<h1>${f.title}</h1><p class="lead">Насколько вам нравятся эти идеи?</p><div class="rating-list">${shownItems(f).map(x=>rating(x,f.selected.indexOf(x),hasOwn(f.reratings,x)?f.reratings[x]:0,"rerating",null,"liking",hasOwn(f.reratings,x))).join("")}</div>${button("Продолжить","submit-rerating",!shownItems(f).every(x=>hasOwn(f.reratings,x)))}</section>`;
+    if(state.screen==="second_rating")html=`<section class="card wide">${progress(state.feedbackIndex,"second")}<h1>${f.title}</h1><p class="lead">Насколько вам нравятся эти идеи?</p><div class="rating-list">${f.selected.map(x=>rating(x,f.selected.indexOf(x),hasOwn(f.reratings,x)?f.reratings[x]:0,"rerating",null,"liking",hasOwn(f.reratings,x))).join("")}</div>${button("Продолжить","submit-rerating",!f.selected.every(x=>hasOwn(f.reratings,x)))}</section>`;
     if(state.screen==="memory_intro")html=`<section class="instruction"><span class="eyebrow">Задание на память</span><div class="instruction-copy">Пожалуйста, запомните следующую последовательность цифр.</div>${button("Начать","memory-start")}</section>`;
     if(state.screen==="memory"){html=`<section class="memory"><span class="eyebrow">Задание на память</span><h1>Запоминайте последовательность цифр</h1><div class="memory-number" id="memory-number"></div><div class="timer" id="timer">30 сек.</div><div class="memory-progress"><span id="memory-bar"></span></div></section>`}
     if(state.screen==="final_questions")html=`<section class="card wide"><h1>Последние вопросы</h1><p class="lead">Пожалуйста, ответьте на все обязательные вопросы.</p><div class="likert-list"><fieldset class="likert"><legend>1. В целом, я доволен(на) собой.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.finalSelfSatisfaction===v?"selected":""}"><input type="radio" name="final-self-satisfaction" data-final-self-satisfaction value="${v}" ${state.finalSelfSatisfaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>2. Принадлежность к россиянам — важная часть моего представления о себе.</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.nationalIdentityImportance===v?"selected":""}"><input type="radio" name="national-identity" data-final-answer="nationalIdentityImportance" value="${v}" ${state.nationalIdentityImportance===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совершенно не согласен(на)</span><span>Полностью согласен(на)</span></div></fieldset><fieldset class="likert"><legend>3. Какую реакцию у вас вызвало то, как проголосовали участники-подростки?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.teenVoteReaction===v?"selected":""}"><input type="radio" name="group-19-vote-reaction" data-final-answer="teenVoteReaction" value="${v}" ${state.teenVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><fieldset class="likert"><legend>4. Какую реакцию у вас вызвало то, как проголосовали взрослые участники?</legend><div class="scale">${[1,2,3,4,5,6,7].map(v=>`<label class="${state.adultVoteReaction===v?"selected":""}"><input type="radio" name="group-49-vote-reaction" data-final-answer="adultVoteReaction" value="${v}" ${state.adultVoteReaction===v?"checked":""}><span>${v}</span></label>`).join("")}</div><div class="anchors"><span>Совсем неприятно</span><span>Совсем приятно</span></div></fieldset><fieldset class="likert"><legend>5. Участники какого возраста голосовали?</legend><div class="attention-options">${[
@@ -314,7 +321,7 @@
     document.querySelectorAll("[data-final-self-satisfaction]").forEach(x=>x.onchange=()=>{state.finalSelfSatisfaction=+x.value;state.finalAbilitySelfRating=state.finalSelfSatisfaction;render();persist()});
     document.querySelectorAll("[data-purpose-guess]").forEach(x=>x.oninput=()=>{state.studyPurposeGuess=x.value;persist()});
     document.querySelectorAll("[data-idea]").forEach(x=>x.onclick=()=>{const c=state.categories[state.categoryIndex],idea=x.dataset.idea,i=c.selected.indexOf(idea);if(i>=0)c.selected.splice(i,1);else if(c.selected.length<3)c.selected.push(idea);error="";event(i>=0?"idea_deselected":"idea_selected",{idea,selected_position:i>=0?null:c.selected.length},c.key);render()});
-    document.querySelectorAll("[data-rating]").forEach(x=>x.oninput=()=>{x.closest(".slider").querySelector("output").value=x.value;x.style.setProperty("--range-fill",x.value+"%");x.dataset.answered="1";const c=state.categories[x.dataset.phase==="initial"?state.categoryIndex:state.feedbackIndex],map=x.dataset.phase==="initial"?c.initialRatings:c.reratings;map[x.dataset.rating]=+x.value;const submitId=x.dataset.phase==="initial"?"submit-initial":"submit-rerating",submit=document.getElementById(submitId);if(submit)submit.disabled=!(x.dataset.phase==="initial"?c.selected:shownItems(c)).every(item=>hasOwn(map,item));persist()});
+    document.querySelectorAll("[data-rating]").forEach(x=>x.oninput=()=>{x.closest(".slider").querySelector("output").value=x.value;x.style.setProperty("--range-fill",x.value+"%");x.dataset.answered="1";const c=state.categories[x.dataset.phase==="initial"?state.categoryIndex:state.feedbackIndex],map=x.dataset.phase==="initial"?c.initialRatings:c.reratings;map[x.dataset.rating]=+x.value;const submitId=x.dataset.phase==="initial"?"submit-initial":"submit-rerating",submit=document.getElementById(submitId);if(submit)submit.disabled=!c.selected.every(item=>hasOwn(map,item));persist()});
     document.querySelectorAll("[data-combined-attention]").forEach(x=>x.onchange=()=>{state.combinedAttentionResponse=x.value;render();persist()});
     const on=(id,fn)=>{const x=document.getElementById(id);if(x)x.onclick=fn};
     on("continue-demo",()=>{
@@ -352,7 +359,7 @@
     on("submit-initial",()=>{const c=csel();if(!c.selected.every(x=>hasOwn(c.initialRatings,x)))return;groupRatings(c);event("initial_ratings_submitted",{selected_ideas:c.selected,ratings:c.initialRatings,comparison_source:c.comparisonSource,comparison_source_age:c.comparisonSourceAge,low_position:c.lowPosition+1,control_position:c.controlPosition+1,high_position:c.highPosition===null?null:c.highPosition+1,feedback_items:c.feedbackItems,omitted_items:c.omittedItems,low_threshold_met:c.lowThresholdMet,low_selection_rule:c.lowSelectionRule,control_delta:c.controlDelta,high_target_included:c.highTargetIncluded,high_selection_rule:c.highSelectionRule},c.key);if(state.categoryIndex===0){state.categoryIndex=1;state.screen="selection"}else{state.feedbackIndex=0;state.screen="group_exposure";event("feedback_phase_started",{},state.categories[0].key)}render();scrollTo(0,0)});
     on("continue-exposure",()=>{const f=state.categories[state.feedbackIndex],source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age);go("second_rating_intro","group_ratings_viewed",{comparison_source:f.comparisonSource,comparison_source_age:source.age,group_ratings:f.groupRatings,feedback_items:f.feedbackItems,omitted_items:f.omittedItems,low_position:f.lowPosition+1,control_position:f.controlPosition+1,high_position:f.highPosition===null?null:f.highPosition+1,low_threshold_met:f.lowThresholdMet,low_selection_rule:f.lowSelectionRule,control_delta:f.controlDelta,high_target_included:f.highTargetIncluded,high_selection_rule:f.highSelectionRule},f.key)});
     on("start-second-rating",()=>{const f=state.categories[state.feedbackIndex];f.reratings={};go("second_rating","second_rating_instruction_viewed",{slider_start_position:0,displayed_initial_grade:0},f.key)});
-    on("submit-rerating",()=>{const f=state.categories[state.feedbackIndex],items=shownItems(f);if(!items.every(x=>hasOwn(f.reratings,x)))return;const changes=Object.fromEntries(items.map(x=>[x,f.reratings[x]-f.initialRatings[x]]));event("reratings_submitted",{reratings:f.reratings,changes,group_ratings:f.groupRatings,feedback_items:f.feedbackItems,omitted_items:f.omittedItems,comparison_source:f.comparisonSource,comparison_source_age:f.comparisonSourceAge,low_position:f.lowPosition+1,control_position:f.controlPosition+1,high_position:f.highPosition===null?null:f.highPosition+1,low_threshold_met:f.lowThresholdMet,low_selection_rule:f.lowSelectionRule,control_delta:f.controlDelta,high_target_included:f.highTargetIncluded,high_selection_rule:f.highSelectionRule},f.key);if(state.feedbackIndex===0){state.memorySequence=Array.from({length:10},()=>ri(0,9));state.memoryStartedAt=null;state.screen="memory_intro"}else{state.screen="final_questions"}persist();render();scrollTo(0,0)});
+    on("submit-rerating",()=>{const f=state.categories[state.feedbackIndex],items=f.selected;if(!items.every(x=>hasOwn(f.reratings,x)))return;const changes=Object.fromEntries(items.map(x=>[x,f.reratings[x]-f.initialRatings[x]]));event("reratings_submitted",{reratings:f.reratings,changes,group_ratings:f.groupRatings,feedback_items:f.feedbackItems,omitted_items:f.omittedItems,comparison_source:f.comparisonSource,comparison_source_age:f.comparisonSourceAge,low_position:f.lowPosition+1,control_position:f.controlPosition+1,high_position:f.highPosition===null?null:f.highPosition+1,low_threshold_met:f.lowThresholdMet,low_selection_rule:f.lowSelectionRule,control_delta:f.controlDelta,high_target_included:f.highTargetIncluded,high_selection_rule:f.highSelectionRule},f.key);if(state.feedbackIndex===0){state.memorySequence=Array.from({length:10},()=>ri(0,9));state.memoryStartedAt=null;state.screen="memory_intro"}else{state.screen="final_questions"}persist();render();scrollTo(0,0)});
     on("submit-final",()=>{if(state.finalSelfSatisfaction===null||state.nationalIdentityImportance===null||state.teenVoteReaction===null||state.adultVoteReaction===null||!state.combinedAttentionResponse){error="Ответьте на все обязательные вопросы.";render();return}state.combinedAttentionCorrect=state.combinedAttentionResponse==="19_49";const participantAge=+state.demographics.age;const combinedCheck={selected_pair:state.combinedAttentionResponse,correct_pair:"19_49",correct:state.combinedAttentionCorrect,ages:[participantAge,49],participant_age:participantAge};event("attention_checks_submitted",{combined_check:combinedCheck});state.completed=true;go("final","survey_completed",{final_ability_self_rating:state.finalAbilitySelfRating,final_self_satisfaction:state.finalSelfSatisfaction,national_identity_importance:state.nationalIdentityImportance,national_identity_group:"россияне",same_age_vote_reaction:state.teenVoteReaction,participant_age_vote_reaction:state.teenVoteReaction,participant_19_vote_reaction:state.teenVoteReaction,participant_49_vote_reaction:state.adultVoteReaction,teen_vote_reaction:state.teenVoteReaction,adult_vote_reaction:state.adultVoteReaction,combined_attention_response:state.combinedAttentionResponse,combined_attention_correct:state.combinedAttentionCorrect,attention_checks:[combinedCheck],study_purpose_guess:state.studyPurposeGuess.trim()||null})});
     on("memory-start",()=>{state.memoryStartedAt=Date.now();go("memory","memory_task_started",{duration_ms:30000},state.categories[0].key)});
   }
