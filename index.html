@@ -289,7 +289,19 @@
     const low=i===f.lowPosition,high=i===f.highPosition;
     const source=sourceDetails(f.comparisonSource,f.comparisonSourceAge??state.demographics.age);
     const markers=`<div class="reference-layer" aria-hidden="true">${marker(f.initialRatings[x],"Вы","participant")}${marker(f.groupRatings[x],source.majorityLabel,`group ${low?"low":high?"high":""}`,true)}</div>`;
-    return`<article class="rating ${low?"low-support":""}"><div class="idea-title"><b class="badge">${i+1}</b><h2>${x}</h2></div><div class="slider exposure-only"><div class="slider-control has-markers"><div class="exposure-track"></div>${markers}</div><div class="anchors"><span>0 — совсем не полезно</span><span>100 — очень полезно</span></div></div></article>`;
+    return`<article class="rating ${low?"low-support":""}">
+  <div class="idea-title">
+    <b class="badge">${i+1}</b>
+    <h2>${x}</h2>
+  </div>
+
+  ${low ? `
+    <p class="exclusion">
+      Эта идея может быть исключена из итогового списка.
+    </p>
+  ` : ""}
+
+  <div class="slider exposure-only"> <div class="slider-control has-markers"><div class="exposure-track"></div>${markers}</div><div class="anchors"><span>0 — совсем не полезно</span><span>100 — очень полезно</span></div></div></article>`;
   }
   function rating(x,i,val,phase,f,scale="usefulness",answered=true){
     const low=f&&i===f.lowPosition,high=f&&i===f.highPosition;
